@@ -1,9 +1,1 @@
-{
-  "name": "BRIEFLA",
-  "short_name": "BRIEFLA",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#f5f6f8",
-  "theme_color": "#111827",
-  "lang": "pl"
-}
+{"name":"BRIEFLA","short_name":"BRIEFLA","start_url":"./index.html","display":"standalone","background_color":"#f7faff","theme_color":"#1768df","lang":"pl"}
