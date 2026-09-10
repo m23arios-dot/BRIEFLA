@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="BRIEFLA – pomoc w przygotowywaniu pism po niemiecku.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+  <title>BRIEFLA</title>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">B</div>
+      <div>
+        <strong>BRIEFLA</strong>
+        <span>Pisma po niemiecku, prościej.</span>
+      </div>
+    </div>
+    <button class="ghost" id="resetBtn">Nowe pismo</button>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">DLA POLAKÓW W NIEMCZECH</p>
+        <h1>Napisz, co chcesz załatwić.<br><span>BRIEFLA przygotuje pismo.</span></h1>
+        <p class="lead">Odpowiedz na kilka prostych pytań. Na końcu dostaniesz gotowy, naturalny tekst po niemiecku.</p>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="panel form-panel">
+        <div class="panel-head">
+          <div>
+            <span class="step">KROK 1</span>
+            <h2>Opowiedz o sprawie</h2>
+          </div>
+        </div>
+
+        <label>
+          Do kogo piszesz?
+          <select id="recipient">
+            <option value="urząd">Urząd / instytucja</option>
+            <option value="ubezpieczyciel">Ubezpieczyciel</option>
+            <option value="pracodawca">Pracodawca</option>
+            <option value="wynajmujący">Wynajmujący</option>
+            <option value="firma">Firma / usługodawca</option>
+            <option value="inna">Inna osoba lub instytucja</option>
+          </select>
+        </label>
+
+        <label>
+          Jaki jest cel pisma?
+          <input id="subject" type="text" placeholder="np. odwołanie od decyzji, prośba o odpowiedź">
+        </label>
+
+        <label>
+          Opisz sytuację własnymi słowami
+          <textarea id="details" rows="7" placeholder="Napisz po polsku, tak jak powiedziałbyś to komuś znajomemu..."></textarea>
+        </label>
+
+        <div class="row">
+          <label>
+            Ton
+            <select id="tone">
+              <option value="neutral">Rzeczowy i uprzejmy</option>
+              <option value="firm">Stanowczy, ale kulturalny</option>
+              <option value="formal">Bardziej formalny</option>
+            </select>
+          </label>
+          <label>
+            Język
+            <select disabled>
+              <option>Niemiecki</option>
+            </select>
+          </label>
+        </div>
+
+        <button class="primary" id="generateBtn">
+          <span>Przygotuj pismo</span>
+          <span>→</span>
+        </button>
+        <p class="hint">Wersja demonstracyjna działa bez połączenia z AI. Backend AI możemy podłączyć jako kolejny etap.</p>
+      </div>
+
+      <div class="panel result-panel">
+        <div class="panel-head result-head">
+          <div>
+            <span class="step">KROK 2</span>
+            <h2>Gotowe pismo</h2>
+          </div>
+          <button class="small-btn" id="copyBtn" disabled>Kopiuj</button>
+        </div>
+
+        <div id="emptyState" class="empty">
+          <div class="empty-icon">✦</div>
+          <h3>Tu pojawi się Twoje pismo</h3>
+          <p>Wypełnij formularz po lewej i kliknij „Przygotuj pismo”.</p>
+        </div>
+
+        <article id="result" class="letter" hidden>
+          <div class="letter-meta">
+            <span id="letterRecipient"></span>
+            <span id="letterDate"></span>
+          </div>
+          <div id="letterBody"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="trust">
+      <div><strong>Prosto</strong><span>Bez prawniczego języka.</span></div>
+      <div><strong>Po polsku</strong><span>Ty opisujesz sprawę po polsku.</span></div>
+      <div><strong>Po niemiecku</strong><span>Odbiorca dostaje gotowy tekst.</span></div>
+    </section>
+  </main>
+
+  <footer>BRIEFLA · Wersja MVP</footer>
+  <script src="app.js"></script>
+</body>
+</html>
