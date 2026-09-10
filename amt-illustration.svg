@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 360" role="img" aria-label="Ilustracja urzędu Amt">
+  <defs>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#183b73" flood-opacity=".12"/>
+    </filter>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eef6ff"/>
+      <stop offset="1" stop-color="#dcecff"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="355" cy="175" r="155" fill="url(#sky)"/>
+  <circle cx="425" cy="72" r="28" fill="#fff" opacity=".9"/>
+  <circle cx="94" cy="92" r="20" fill="#fff" opacity=".75"/>
+
+  <!-- building -->
+  <g filter="url(#shadow)">
+    <rect x="238" y="116" width="214" height="176" rx="10" fill="#dcecff"/>
+    <rect x="248" y="133" width="194" height="159" fill="#f7fbff"/>
+    <path d="M225 116h240l-22-24H247z" fill="#2d78df"/>
+    <path d="M244 92h202l-18-17H262z" fill="#185fbf"/>
+    <rect x="328" y="145" width="36" height="42" rx="4" fill="#2d78df"/>
+    <path d="M346 145v42" stroke="#fff" stroke-width="3" opacity=".8"/>
+    <path d="M328 166h36" stroke="#fff" stroke-width="3" opacity=".8"/>
+
+    <text x="345" y="218" text-anchor="middle" font-family="Arial, sans-serif" font-size="31" font-weight="800" fill="#1b63c6">Amt</text>
+
+    <g fill="#c7ddfa">
+      <rect x="263" y="236" width="29" height="26" rx="4"/>
+      <rect x="306" y="236" width="29" height="26" rx="4"/>
+      <rect x="356" y="236" width="29" height="26" rx="4"/>
+      <rect x="399" y="236" width="29" height="26" rx="4"/>
+    </g>
+    <g fill="#2d78df" opacity=".28">
+      <rect x="263" y="270" width="29" height="22" rx="4"/>
+      <rect x="306" y="270" width="29" height="22" rx="4"/>
+      <rect x="356" y="270" width="29" height="22" rx="4"/>
+      <rect x="399" y="270" width="29" height="22" rx="4"/>
+    </g>
+  </g>
+
+  <!-- document -->
+  <g transform="translate(62 148) rotate(-9)" filter="url(#shadow)">
+    <rect width="166" height="126" rx="11" fill="#fff"/>
+    <path d="M123 0h31c7 0 12 5 12 12v31z" fill="#e8f2ff"/>
+    <path d="M28 36h96" stroke="#79a9e9" stroke-width="9" stroke-linecap="round"/>
+    <path d="M28 60h77" stroke="#b2ccef" stroke-width="9" stroke-linecap="round"/>
+    <path d="M28 84h90" stroke="#b2ccef" stroke-width="9" stroke-linecap="round"/>
+    <path d="M28 105h56" stroke="#d1def1" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <!-- envelope -->
+  <g transform="translate(42 260) rotate(4)" filter="url(#shadow)">
+    <rect width="188" height="72" rx="14" fill="#1768df"/>
+    <path d="M12 15l82 50 82-50" fill="none" stroke="#fff" stroke-width="5" opacity=".88"/>
+    <path d="M12 58l56-34M176 58l-56-34" fill="none" stroke="#8fbcf5" stroke-width="5" opacity=".65"/>
+  </g>
+
+  <!-- German flag -->
+  <g transform="translate(437 306)">
+    <rect width="42" height="28" rx="4" fill="#fff" opacity=".9"/>
+    <path d="M3 4h36v7H3z" fill="#151a24"/>
+    <path d="M3 11h36v7H3z" fill="#d51f32"/>
+    <path d="M3 18h36v7H3z" fill="#f1c329"/>
+  </g>
+</svg>
