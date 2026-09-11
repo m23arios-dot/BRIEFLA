@@ -199,3 +199,76 @@
 #templateList.template-grid button small{display:block;margin-top:4px;font-size:10.5px;line-height:1.25;color:#748196}
 #templateList.template-grid button i{font-style:normal;font-size:21px;color:#8a95a5}
 @media(max-width:720px){#templateList.template-grid{grid-template-columns:1fr}.template-section-label{margin-top:14px}}
+
+/* Mobile hero fix: keep the illustration in normal flow so it never covers the text or CTA. */
+@media(max-width:849px){
+  .main{padding:12px 14px calc(92px + env(safe-area-inset-bottom));}
+  #home{padding-top:0;}
+  .hero-card{
+    min-height:0 !important;
+    height:auto !important;
+    padding:20px 14px 18px !important;
+    overflow:hidden !important;
+  }
+  .hero-logo{
+    width:150px !important;
+    margin:6px auto 18px !important;
+  }
+  .hero-title{
+    font-size:27px !important;
+    line-height:1.16 !important;
+    letter-spacing:-.7px !important;
+    max-width:100% !important;
+    margin:0 auto 20px !important;
+    padding:0 !important;
+  }
+  .hero-content{
+    position:relative !important;
+    z-index:3 !important;
+    width:100% !important;
+    margin:0 !important;
+  }
+  .benefits{
+    margin:0 auto 18px !important;
+    max-width:330px;
+  }
+  .benefits li{
+    display:flex;
+    align-items:center;
+    font-size:14px !important;
+    line-height:1.3;
+    margin:10px 0 !important;
+  }
+  .benefits li:before{
+    flex:0 0 25px;
+    margin-right:11px;
+  }
+  .hero-content .cta{
+    position:relative !important;
+    z-index:4 !important;
+    width:min(300px,100%) !important;
+    margin:16px auto 0 !important;
+    padding:13px 16px !important;
+  }
+  .illustration{
+    position:relative !important;
+    right:auto !important;
+    bottom:auto !important;
+    transform:none !important;
+    width:calc(100% + 20px) !important;
+    height:220px !important;
+    margin:14px -10px -8px !important;
+    z-index:1 !important;
+    overflow:hidden !important;
+  }
+  .illustration img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+    object-position:center !important;
+  }
+  .mobile-nav{
+    height:70px !important;
+    padding-bottom:env(safe-area-inset-bottom) !important;
+  }
+}
