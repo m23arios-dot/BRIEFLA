@@ -80,6 +80,18 @@
         </div>
       </section>
 
+      <section id="smartQuestions" class="view">
+        <header><button class="back" data-back>‹</button><div><small data-i18n="smartStep">KROK 2A</small><h2 data-i18n="smartTitle">Doprecyzuj swoją sprawę</h2></div><button class="round-help">?</button></header>
+        <div class="smart-card">
+          <div class="smart-badge">BRIEFLA</div>
+          <h3 data-i18n="smartIntroTitle">Potrzebuję jeszcze kilku informacji</h3>
+          <p class="smart-intro" data-i18n="smartIntroText">Dzięki temu pismo będzie konkretne i nie będziemy dopisywać informacji, których nie podałeś.</p>
+          <div id="smartQuestionList" class="smart-question-list"></div>
+          <button class="cta full" id="smartContinue" data-i18n="smartContinue">Przygotuj pismo <span>→</span></button>
+          <p class="smart-security" data-i18n="smartSecurity">Wpisuj tylko dane potrzebne do tej sprawy. Przed wysłaniem zawsze możesz wszystko sprawdzić i poprawić.</p>
+        </div>
+      </section>
+
       <section id="result" class="view">
         <header><button class="back" data-back>‹</button><div><small data-i18n="step3">KROK 3</small><h2 data-i18n="letterReady">Twoje pismo jest gotowe!</h2></div><button class="round-help">?</button></header>
         <div class="template-editor" id="templateEditor">
@@ -168,6 +180,6 @@
       <button data-nav="profile"><span>♙</span><span data-i18n="navProfile">Profil</span></button>
     </nav>
   </div>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

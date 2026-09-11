@@ -208,15 +208,155 @@ function fillResult(subject, body, translation, recipient=""){
   show("result");
 }
 
-function generate(){
-  const raw=(area?.value||"").trim()||"Chcę poinformować Państwa o mojej sytuacji i proszę o kontakt w tej sprawie.";
-  const l=raw.toLowerCase();
-  let subject="Anfrage", body=`ich wende mich an Sie bezüglich meines Anliegens.\n\n${raw}\n\nBitte teilen Sie mir mit, ob Sie weitere Informationen oder Unterlagen benötigen.`;
-  if(l.includes("wypowied")||l.includes("mieszkan")){subject="Kündigung des Mietvertrags";body=`hiermit möchte ich meinen Mietvertrag kündigen.\n\n${raw}\n\nBitte bestätigen Sie mir den Eingang dieser Kündigung und teilen Sie mir den Beendigungstermin mit.`}
-  else if(l.includes("jobcenter")||l.includes("bürgergeld")){subject="Mitteilung über meine Beschäftigung";body=`hiermit informiere ich Sie darüber, dass sich meine berufliche Situation geändert hat.\n\n${raw}\n\nBitte prüfen Sie die Angaben und teilen Sie mir mit, ob weitere Unterlagen benötigt werden.`}
-  else if(l.includes("praca")||l.includes("prac")){subject="Mitteilung über meine neue Beschäftigung";body=`hiermit möchte ich Sie darüber informieren, dass ich eine neue Beschäftigung aufgenommen habe bzw. aufnehmen werde.\n\n${raw}\n\nBitte berücksichtigen Sie diese Änderung und teilen Sie mir mit, ob Sie weitere Unterlagen benötigen.`}
-  fillResult(subject,body,"Przedstawiam swoje Anliegen po niemiecku w jasnej, formalnej formie. Treść została przygotowana na podstawie Twojego opisu.");
+let pendingAnalysis=null;
+
+function normalizeCaseText(text){
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 }
+
+function detectDate(text){
+  const m=text.match(/(?:od|seit|ab)\s+(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}|\d{1,2}\s+(?:stycznia|lutego|marca|kwietnia|maja|czerwca|lipca|sierpnia|wrzesnia|pazdziernika|listopada|grudnia))/i);
+  return m?m[1]:"";
+}
+
+function analyzeCase(raw){
+  const l=normalizeCaseText(raw);
+  let intent="other", recipient="", subject="", questions=[];
+  if((l.includes("finanzamt")||l.includes("finans")||l.includes("podatk")) && (l.includes("konto")||l.includes("iban")||l.includes("bank"))){
+    intent="bankChange"; recipient="Finanzamt"; subject="Mitteilung über die Änderung meiner Bankverbindung";
+    questions=[
+      {id:"newIban",label:{pl:"Nowy IBAN",uk:"Новий IBAN"},placeholder:{pl:"DE…",uk:"DE…"},required:true,type:"text"},
+      {id:"effectiveDate",label:{pl:"Od kiedy obowiązuje zmiana?",uk:"З якої дати діє зміна?"},placeholder:{pl:"np. 01.10.2026",uk:"напр. 01.10.2026"},required:false,type:"text",prefill:detectDate(raw)},
+      {id:"taxId",label:{pl:"Steuer-ID (opcjonalnie)",uk:"Steuer-ID (необов’язково)"},placeholder:{pl:"Numer Steuer-ID",uk:"Номер Steuer-ID"},required:false,type:"text"}
+    ];
+  } else if(l.includes("jobcenter") || l.includes("burgergeld")){
+    recipient="Jobcenter";
+    if(l.includes("nowa praca")||l.includes("nowa prace")||l.includes("zaczynam prace")||l.includes("rozpoczynam prace")||l.includes("neue arbeit")||l.includes("neue beschaftigung")){
+      intent="newJobJobcenter"; subject="Mitteilung über die Aufnahme einer Beschäftigung";
+      questions=[
+        {id:"startDate",label:{pl:"Od kiedy zaczynasz pracę?",uk:"З якої дати ви починаєте працювати?"},placeholder:{pl:"np. 01.10.2026",uk:"напр. 01.10.2026"},required:true,type:"text",prefill:detectDate(raw)},
+        {id:"employer",label:{pl:"Nazwa pracodawcy (opcjonalnie)",uk:"Назва роботодавця (необов’язково)"},placeholder:{pl:"Nazwa firmy",uk:"Назва компанії"},required:false,type:"text"},
+        {id:"salary",label:{pl:"Wynagrodzenie brutto (opcjonalnie)",uk:"Зарплата брутто (необов’язково)"},placeholder:{pl:"np. 2.500 €",uk:"напр. 2 500 €"},required:false,type:"text"}
+      ];
+    } else if(l.includes("dochod")||l.includes("zarob")||l.includes("wynagrod")||l.includes("einkommen")){
+      intent="incomeChange"; subject="Mitteilung über eine Einkommensänderung";
+      questions=[
+        {id:"changeDate",label:{pl:"Od kiedy zmienił się dochód?",uk:"З якої дати змінився дохід?"},placeholder:{pl:"np. 01.10.2026",uk:"напр. 01.10.2026"},required:true,type:"text",prefill:detectDate(raw)},
+        {id:"newIncome",label:{pl:"Nowy dochód brutto (opcjonalnie)",uk:"Новий дохід брутто (необов’язково)"},placeholder:{pl:"Kwota",uk:"Сума"},required:false,type:"text"}
+      ];
+    } else {
+      intent="jobcenterGeneral"; subject="Mitteilung an das Jobcenter";
+      questions=[{id:"purpose",label:{pl:"Czego dotyczy sprawa?",uk:"Чого стосується справа?"},required:true,type:"select",options:[{value:"address",pl:"Zmiana adresu",uk:"Зміна адреси"},{value:"income",pl:"Zmiana dochodu",uk:"Зміна доходу"},{value:"work",pl:"Nowa praca / zmiana pracy",uk:"Нова робота / зміна роботи"},{value:"documents",pl:"Dosłanie dokumentów",uk:"Надсилання документів"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]}];
+    }
+  } else if(l.includes("adres")||l.includes("anschrift")){
+    intent="addressChange"; recipient="Bürgeramt"; subject="Mitteilung über meine neue Anschrift";
+    questions=[{id:"newAddress",label:{pl:"Nowy adres",uk:"Нова адреса"},placeholder:{pl:"Ulica, numer, PLZ, miejscowość",uk:"Вулиця, номер, індекс, місто"},required:true,type:"text"}];
+  } else if(l.includes("termin")||l.includes("spotkan")||l.includes("umowic")||l.includes("umówić")){
+    intent="appointment"; recipient="Zuständige Stelle"; subject="Bitte um einen Termin";
+    questions=[{id:"preferredDate",label:{pl:"Preferowany termin (opcjonalnie)",uk:"Бажана дата/час (необов’язково)"},placeholder:{pl:"np. 15.10.2026 po 14:00",uk:"напр. 15.10.2026 після 14:00"},required:false,type:"text"}];
+  } else if(l.includes("brakuj")||l.includes("doslac")||l.includes("dosłać")||l.includes("unterlagen")||l.includes("dokument")){
+    intent="documents"; recipient="Zuständige Stelle"; subject="Nachreichung von Unterlagen";
+    questions=[{id:"documentType",label:{pl:"Czego dotyczą dokumenty?",uk:"Чого стосуються документи?"},required:true,type:"select",options:[{value:"income",pl:"Dochód / wynagrodzenie",uk:"Дохід / заробітна плата"},{value:"identity",pl:"Dokument tożsamości",uk:"Документ, що посвідчує особу"},{value:"residence",pl:"Pobyt / dokument pobytowy",uk:"Проживання / документ на проживання"},{value:"tax",pl:"Podatki",uk:"Податки"},{value:"other",pl:"Inne dokumenty",uk:"Інші документи"}]}];
+  } else if(l.includes("wypowied") && (l.includes("mieszkan")||l.includes("umow")||l.includes("najem")||l.includes("miet"))){
+    intent="rentTermination"; recipient="Vermieter / Hausverwaltung"; subject="Kündigung des Mietvertrags";
+    questions=[{id:"address",label:{pl:"Adres mieszkania",uk:"Адреса житла"},placeholder:{pl:"Ulica, numer, PLZ, miejscowość",uk:"Вулиця, номер, індекс, місто"},required:true,type:"text"},{id:"terminationDate",label:{pl:"Data zakończenia umowy (jeśli znasz)",uk:"Дата завершення договору (якщо відома)"},placeholder:{pl:"np. 31.12.2026",uk:"напр. 31.12.2026"},required:false,type:"text"}];
+  } else if(l.includes("chor")||l.includes("krank")||l.includes("krankmeldung")){
+    intent="sick"; recipient="Arbeitgeber"; subject="Krankmeldung";
+    questions=[{id:"sickFrom",label:{pl:"Od kiedy jesteś niezdolny do pracy?",uk:"З якої дати ви непрацездатні?"},placeholder:{pl:"np. 11.09.2026",uk:"напр. 11.09.2026"},required:true,type:"text",prefill:detectDate(raw)}];
+  } else if(l.includes("auslanderbehorde")||l.includes("pobyt")||l.includes("aufenthalt")){
+    intent="residence"; recipient="Ausländerbehörde"; subject="Anfrage zu meinem Aufenthaltsstatus";
+    questions=[{id:"purpose",label:{pl:"Czego dotyczy sprawa?",uk:"Чого стосується справа?"},required:true,type:"select",options:[{value:"appointment",pl:"Termin",uk:"Термін"},{value:"extension",pl:"Przedłużenie dokumentu pobytowego",uk:"Продовження документа на проживання"},{value:"documents",pl:"Wymagane dokumenty",uk:"Необхідні документи"},{value:"status",pl:"Informacja o statusie pobytu",uk:"Інформація про статус перебування"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]}];
+  }
+  return {intent,recipient,subject,questions,raw};
+}
+
+function renderSmartQuestions(analysis){
+  pendingAnalysis=analysis;
+  const list=$("smartQuestionList"); if(!list)return;
+  const lang=language||"pl";
+  list.innerHTML=analysis.questions.map(q=>{
+    const label=`<span>${q.label[lang]}${q.required?' *':''}</span>`;
+    if(q.type==="select"){
+      const options=(q.options||[]).map(o=>`<option value="${escapeHtml(o.value)}">${escapeHtml(o[lang])}</option>`).join("");
+      return `<label class="smart-question">${label}<select id="smart_${q.id}" ${q.required?'required':''}><option value="">${lang==="uk"?"Оберіть варіант…":"Wybierz opcję…"}</option>${options}</select></label>`;
+    }
+    return `<label class="smart-question">${label}<input id="smart_${q.id}" type="${q.type||'text'}" placeholder="${escapeHtml(q.placeholder?.[lang]||'')}" value="${escapeHtml(q.prefill||'')}" ${q.required?'required':''}></label>`;
+  }).join("");
+  show("smartQuestions");
+}
+
+function collectSmartAnswers(){
+  const answers={};
+  for(const q of (pendingAnalysis?.questions||[])){
+    const el=$("smart_"+q.id); answers[q.id]=(el?.value||"").trim();
+    if(q.required && !answers[q.id]){
+      el?.focus();
+      return null;
+    }
+  }
+  return answers;
+}
+
+function buildSmartDraft(analysis, answers){
+  const a=answers, intent=analysis.intent;
+  let body="", translation="";
+  if(intent==="bankChange"){
+    body=`hiermit möchte ich Sie darüber informieren, dass sich meine Bankverbindung geändert hat.\n\nMeine neue IBAN lautet: ${a.newIban}.${a.effectiveDate?`\nDie Änderung gilt ab dem ${a.effectiveDate}.`:''}${a.taxId?`\nMeine Steuer-ID lautet: ${a.taxId}.`:''}\n\nIch bitte Sie, meine neue Bankverbindung für zukünftige Zahlungen bzw. Steuererstattungen zu berücksichtigen. Bitte bestätigen Sie mir kurz die Änderung.\n\nVielen Dank für Ihre Rückmeldung.`;
+    translation=`Informuję Finanzamt o zmianie rachunku bankowego. Nowy IBAN: ${a.newIban}.${a.effectiveDate?` Zmiana obowiązuje od ${a.effectiveDate}.`:''}${a.taxId?` Steuer-ID: ${a.taxId}.`:''} Proszę o uwzględnienie nowego rachunku przy przyszłych płatnościach lub zwrotach podatku oraz o krótkie potwierdzenie.`;
+  } else if(intent==="newJobJobcenter"){
+    body=`hiermit informiere ich Sie darüber, dass ich ab dem ${a.startDate} eine neue Beschäftigung aufnehme.${a.employer?`\n\nArbeitgeber: ${a.employer}.`:''}${a.salary?`\nDas voraussichtliche Bruttoeinkommen beträgt ${a.salary}.`:''}\n\nIch bitte Sie, diese Änderung bei der Berechnung meiner Leistungen zu berücksichtigen. Falls Sie weitere Unterlagen oder Nachweise benötigen, teilen Sie mir bitte mit, welche Dokumente ich einreichen soll.\n\nVielen Dank für Ihre Rückmeldung.`;
+    translation=`Informuję Jobcenter, że od ${a.startDate} rozpoczynam nową pracę.${a.employer?` Pracodawca: ${a.employer}.`:''}${a.salary?` Przewidywane wynagrodzenie brutto: ${a.salary}.`:''} Proszę uwzględnić tę zmianę przy ustalaniu świadczeń i poinformować mnie, jeśli potrzebne są dodatkowe dokumenty.`;
+  } else if(intent==="incomeChange"){
+    body=`hiermit informiere ich Sie darüber, dass sich mein Einkommen ab dem ${a.changeDate} geändert hat.${a.newIncome?`\n\nMein neues Bruttoeinkommen beträgt ${a.newIncome}.`:''}\n\nBitte berücksichtigen Sie diese Änderung bei meinem Vorgang und teilen Sie mir mit, welche Nachweise Sie noch benötigen.\n\nVielen Dank für Ihre Rückmeldung.`;
+    translation=`Informuję Jobcenter o zmianie dochodu od ${a.changeDate}.${a.newIncome?` Nowy dochód brutto wynosi ${a.newIncome}.`:''} Proszę uwzględnić zmianę w mojej sprawie i poinformować mnie, jakie dokumenty są jeszcze potrzebne.`;
+  } else if(intent==="addressChange"){
+    body=`hiermit möchte ich Sie über meine neue Anschrift informieren.\n\nMeine neue Adresse lautet:\n${a.newAddress}\n\nIch bitte Sie, meine Daten entsprechend zu aktualisieren und mir die Änderung kurz zu bestätigen.\n\nVielen Dank für Ihre Rückmeldung.`;
+    translation=`Informuję o zmianie adresu. Mój nowy adres to: ${a.newAddress}. Proszę o aktualizację danych i krótkie potwierdzenie zmiany.`;
+  } else if(intent==="appointment"){
+    body=`ich möchte gerne einen Termin bei Ihnen vereinbaren.${a.preferredDate?`\n\nMein bevorzugter Termin bzw. Zeitraum ist: ${a.preferredDate}.`:''}\n\nBitte teilen Sie mir mit, wann ein Termin möglich ist.\n\nVielen Dank für Ihre Rückmeldung.`;
+    translation=`Proszę o umówienie terminu.${a.preferredDate?` Preferowany termin lub przedział czasu: ${a.preferredDate}.`:''} Proszę o informację, kiedy spotkanie będzie możliwe.`;
+  } else if(intent==="documents"){
+    body=`hiermit reiche ich folgende noch fehlende Unterlagen nach:\n${a.documents}\n\nBitte bestätigen Sie mir kurz den Eingang der Unterlagen. Falls noch weitere Dokumente benötigt werden, teilen Sie mir dies bitte mit.\n\nVielen Dank.`;
+    translation=`Dosyłam następujące brakujące dokumenty: ${a.documents}. Proszę o krótkie potwierdzenie ich otrzymania oraz informację, jeśli potrzebne są jeszcze inne dokumenty.`;
+  } else if(intent==="rentTermination"){
+    body=`hiermit kündige ich den Mietvertrag für die Wohnung ${a.address} fristgerecht zum nächstmöglichen Zeitpunkt.${a.terminationDate?`\n\nAls gewünschtes Beendigungsdatum nenne ich den ${a.terminationDate}.`:''}\n\nBitte bestätigen Sie mir den Eingang dieser Kündigung sowie den Beendigungstermin schriftlich.\n\nVielen Dank.`;
+    translation=`Wypowiadam umowę najmu mieszkania przy adresie ${a.address}.${a.terminationDate?` Jako datę zakończenia wskazuję ${a.terminationDate}.`:''} Proszę o pisemne potwierdzenie otrzymania wypowiedzenia i daty zakończenia umowy.`;
+  } else if(intent==="sick"){
+    body=`hiermit möchte ich Sie darüber informieren, dass ich seit dem ${a.sickFrom} krankheitsbedingt arbeitsunfähig bin.\n\nEine Arbeitsunfähigkeitsbescheinigung liegt vor bzw. wird entsprechend übermittelt.\n\nVielen Dank für Ihr Verständnis.`;
+    translation=`Informuję o niezdolności do pracy z powodu choroby od ${a.sickFrom}. Zaświadczenie o niezdolności do pracy jest dostępne lub zostanie przekazane zgodnie z wymaganiami.`;
+  } else if(intent==="residence"){
+    body=`ich wende mich an Sie bezüglich meines Aufenthaltsstatus.\n\nMein Anliegen: ${a.purpose}\n\nBitte teilen Sie mir mit, welche Unterlagen erforderlich sind und wie ich weiter vorgehen soll.\n\nVielen Dank für Ihre Rückmeldung.`;
+    translation=`Zwracam się do Ausländerbehörde w sprawie mojego pobytu. Potrzebuję: ${a.purpose}. Proszę o informację, jakie dokumenty są wymagane i co powinienem zrobić dalej.`;
+  } else if(intent==="jobcenterGeneral"){
+    body=`hiermit möchte ich Sie über folgende Änderung bzw. Angelegenheit informieren:\n\n${a.purpose}\n\nBitte teilen Sie mir mit, ob weitere Unterlagen oder Angaben benötigt werden.\n\nVielen Dank für Ihre Rückmeldung.`;
+    translation=`Informuję Jobcenter o następującej zmianie lub sprawie: ${a.purpose}. Proszę o informację, czy potrzebne są dodatkowe dokumenty lub dane.`;
+  } else {
+    return null;
+  }
+  return {subject:analysis.subject,body,translation,recipient:analysis.recipient};
+}
+
+function generate(){
+  const raw=(area?.value||"").trim();
+  if(!raw){
+    area?.focus();
+    return;
+  }
+  const analysis=analyzeCase(raw);
+  if(analysis.questions.length){ renderSmartQuestions(analysis); return; }
+  const draft=buildSmartDraft(analysis,{});
+  if(draft) fillResult(draft.subject,draft.body,draft.translation,draft.recipient);
+}
+
+$("generate")?.addEventListener("click",generate);
+$("smartContinue")?.addEventListener("click",()=>{
+  const answers=collectSmartAnswers();
+  if(!answers)return;
+  const draft=buildSmartDraft(pendingAnalysis,answers);
+  if(!draft)return;
+  fillResult(draft.subject,draft.body,draft.translation,draft.recipient);
+});
+
 $("generate")?.addEventListener("click",generate);
 
 document.querySelectorAll("[data-template]").forEach(btn=>btn.addEventListener("click",()=>{
@@ -264,7 +404,7 @@ const uiText={
     navStart:"Start",navCategories:"Kategorie",navLetters:"Moje pisma",navTemplates:"Szablony",navProfile:"Profil",settings:"Ustawienia",help:"Pomoc / FAQ",
     heroTitle:"Twoje pisma po niemiecku.<br>Prosto. Szybko. Bez stresu.",benefit1:"E-maile i listy do urzędów",benefit2:"Gotowe szablony",benefit3:"Tłumaczenia i wyjaśnienia",benefit4:"Krok po kroku",startNow:"Zacznij teraz <span>→</span>",
     feature1Title:"Wybierz kategorię",feature1Text:"Znajdź odpowiedni temat Twojej sprawy.",feature2Title:"Opisz swoją sprawę",feature2Text:"Napisz po polsku, co chcesz przekazać.",feature3Title:"Otrzymaj gotowe pismo",feature3Text:"Pobierz, skopiuj lub wyślij bezpośrednio.",
-    step1:"KROK 1",chooseCategory:"Wybierz kategorię",step2:"KROK 2",describeCase:"Opisz swoją sprawę",step3:"KROK 3",letterReady:"Twoje pismo jest gotowe!",
+    smartStep:"KROK 2A",smartTitle:"Doprecyzuj swoją sprawę",smartIntroTitle:"Potrzebuję jeszcze kilku informacji",smartIntroText:"Dzięki temu pismo będzie konkretne i nie będziemy dopisywać informacji, których nie podałeś.",smartContinue:"Przygotuj pismo <span>→</span>",smartSecurity:"Wpisuj tylko dane potrzebne do tej sprawy. Przed wysłaniem zawsze możesz wszystko sprawdzić i poprawić.",step1:"KROK 1",chooseCategory:"Wybierz kategorię",step2:"KROK 2",describeCase:"Opisz swoją sprawę",step3:"KROK 3",letterReady:"Twoje pismo jest gotowe!",
     describeIntro:"Napisz po polsku, co chcesz przekazać.<br>Możesz wpisać to własnymi słowami.",addFile:"▧ &nbsp; Dodaj plik <small>(np. zdjęcie pisma)</small>",next:"Dalej <span>→</span>",
     editorTitle:"Dostosuj pismo do siebie",editorSub:"Uzupełnij dane i zmień treść przed wysłaniem.",editing:"EDYCJA",senderName:"Imię i nazwisko",recipient:"Odbiorca / urząd",street:"Ulica i numer",city:"PLZ i miejscowość",recipientAddress:"Adres odbiorcy",date:"Data",subjectLabel:"Temat",bodyLabel:"Treść pisma",editorHint:"Możesz zmienić każde pole. Podgląd poniżej aktualizuje się automatycznie.",emailTab:"E-mail",letterTab:"List (DIN 5008)",translationLabel:"🇵🇱 &nbsp; Tłumaczenie na polski",copy:"▣ &nbsp; Kopiuj",translationButton:"PL &nbsp; Tłumaczenie",saveLetter:"⇩ &nbsp; Zapisz pismo",aiNote:"BRIEFLA przygotowuje pismo na podstawie Twojego opisu. Wersja AI analizuje sens wypowiedzi, a nie tylko podmienia słowa.",
     savedLettersSub:"Twoje zapisane pisma",lettersIntro:"Tu znajdziesz pisma, które wcześniej przygotowałeś i zapisałeś.",createFromTemplate:"＋ &nbsp; Utwórz z szablonu",templatesSub:"Gotowe pisma do edycji",searchTemplate:"⌕  Szukaj szablonu...",sectionOffices:"Urzędy i sprawy urzędowe",sectionMoney:"Jobcenter i pieniądze",sectionWorkHealth:"Praca i zdrowie",sectionHomeCar:"Mieszkanie i samochód",sectionOther:"Pozostałe",
@@ -278,7 +418,7 @@ const uiText={
     navStart:"Головна",navCategories:"Категорії",navLetters:"Мої листи",navTemplates:"Шаблони",navProfile:"Профіль",settings:"Налаштування",help:"Допомога / FAQ",
     heroTitle:"Ваші листи німецькою.<br>Просто. Швидко. Без стресу.",benefit1:"Електронні листи та листи до установ",benefit2:"Готові шаблони",benefit3:"Переклади та пояснення",benefit4:"Крок за кроком",startNow:"Почати зараз <span>→</span>",
     feature1Title:"Оберіть категорію",feature1Text:"Знайдіть відповідну тему вашої справи.",feature2Title:"Опишіть свою справу",feature2Text:"Напишіть українською, що ви хочете повідомити.",feature3Title:"Отримайте готовий лист",feature3Text:"Завантажте, скопіюйте або надішліть його.",
-    step1:"КРОК 1",chooseCategory:"Оберіть категорію",step2:"КРОК 2",describeCase:"Опишіть свою справу",step3:"КРОК 3",letterReady:"Ваш лист готовий!",
+    smartStep:"КРОК 2A",smartTitle:"Уточніть вашу справу",smartIntroTitle:"Потрібно ще кілька відомостей",smartIntroText:"Так лист буде конкретним, і ми не будемо додавати інформацію, якої ви не надавали.",smartContinue:"Підготувати лист <span>→</span>",smartSecurity:"Вводьте лише дані, потрібні для цієї справи. Перед надсиланням ви завжди можете все перевірити та виправити.",step1:"КРОК 1",chooseCategory:"Оберіть категорію",step2:"КРОК 2",describeCase:"Опишіть свою справу",step3:"КРОК 3",letterReady:"Ваш лист готовий!",
     describeIntro:"Напишіть українською, що ви хочете повідомити.<br>Можете описати все своїми словами.",addFile:"▧ &nbsp; Додати файл <small>(наприклад, фото листа)</small>",next:"Далі <span>→</span>",
     editorTitle:"Налаштуйте лист під себе",editorSub:"Заповніть дані та змініть текст перед надсиланням.",editing:"РЕДАГУВАННЯ",senderName:"Ім’я та прізвище",recipient:"Одержувач / установа",street:"Вулиця та номер",city:"Індекс і місто",recipientAddress:"Адреса одержувача",date:"Дата",subjectLabel:"Тема",bodyLabel:"Текст листа",editorHint:"Ви можете змінити будь-яке поле. Попередній перегляд оновлюється автоматично.",emailTab:"E-mail",letterTab:"Лист (DIN 5008)",translationLabel:"🇺🇦 &nbsp; Переклад українською",copy:"▣ &nbsp; Копіювати",translationButton:"UA &nbsp; Переклад",saveLetter:"⇩ &nbsp; Зберегти лист",aiNote:"BRIEFLA готує лист на основі вашого опису. Версія AI аналізує зміст, а не просто замінює слова.",
     savedLettersSub:"Ваші збережені листи",lettersIntro:"Тут ви знайдете листи, які раніше підготували та зберегли.",createFromTemplate:"＋ &nbsp; Створити з шаблону",templatesSub:"Готові листи для редагування",searchTemplate:"⌕  Пошук шаблону...",sectionOffices:"Установи та офіційні справи",sectionMoney:"Jobcenter і фінанси",sectionWorkHealth:"Робота та здоров’я",sectionHomeCar:"Житло та автомобіль",sectionOther:"Інше",

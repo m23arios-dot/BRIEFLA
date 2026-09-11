@@ -22,3 +22,7 @@ Wszystkie potrzebne pliki znajdują się bezpośrednio w jednym miejscu — bez 
 - wyszukiwanie szablonów
 - kopiowanie i zapis wygenerowanego pisma
 - responsywny widok desktop/mobile
+
+
+## Smart case assistant
+The current frontend includes a guided intake layer for common cases (Finanzamt/bank details, Jobcenter/new job or income change, address, appointment, documents, rent termination, sick leave and residence matters). It deliberately does not insert the user's Polish/Ukrainian description directly into German output. A secure backend/AI connection is still required for truly free-form case understanding and translation.
