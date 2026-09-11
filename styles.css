@@ -313,3 +313,48 @@
     z-index:4 !important;
   }
 }
+
+/* Mobile refinement: compact category typography, compact bottom navigation and visible language switcher. */
+@media(max-width:849px){
+  .main{
+    padding-top:58px !important;
+  }
+  .top-controls{
+    display:flex !important;
+    position:absolute !important;
+    top:12px !important;
+    right:14px !important;
+    margin:0 !important;
+    justify-content:flex-end !important;
+    z-index:100 !important;
+  }
+  .top-controls>button{
+    font-size:12px !important;
+    padding:7px 11px !important;
+    white-space:nowrap !important;
+  }
+  .category-grid .cat b{
+    font-size:12px !important;
+    line-height:1.25 !important;
+  }
+  .category-grid .cat small{
+    font-size:10px !important;
+    line-height:1.25 !important;
+  }
+  .category-grid .cat{
+    grid-template-columns:42px 1fr 18px !important;
+    padding:11px !important;
+  }
+  .mobile-nav button{
+    font-size:10px !important;
+    line-height:1.1 !important;
+  }
+  .mobile-nav button span:first-child{
+    font-size:20px !important;
+    margin-bottom:2px !important;
+  }
+  .mobile-nav button span:last-child{
+    font-size:10px !important;
+    white-space:nowrap !important;
+  }
+}
