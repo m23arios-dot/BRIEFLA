@@ -460,3 +460,10 @@
 .smart-question select{width:100%;box-sizing:border-box;border:1px solid #d9e2ee;border-radius:13px;padding:12px 13px;font:inherit;font-size:14px;color:#1b2941;background:#fff;outline:none}
 .smart-question select:focus{border-color:#6ea4ee;box-shadow:0 0 0 3px rgba(37,112,225,.10)}
 @media(max-width:720px){.smart-question select{font-size:14px;padding:11px 12px}}
+
+/* Smart Assistant form controls: consistent on iPhone and desktop. */
+.smart-question textarea{width:100%;box-sizing:border-box;border:1px solid #d9e2ee;border-radius:13px;padding:12px 13px;font:inherit;font-size:14px;line-height:1.45;color:#1b2941;background:#fff;outline:none;min-height:110px;resize:vertical}
+.smart-question textarea:focus{border-color:#6ea4ee;box-shadow:0 0 0 3px rgba(37,112,225,.10)}
+.smart-question input[type="date"]{appearance:none;-webkit-appearance:none;min-height:44px;touch-action:manipulation}
+.smart-question input,.smart-question select,.smart-question textarea{touch-action:manipulation}
+#editDate{appearance:none;-webkit-appearance:none;min-height:44px;touch-action:manipulation}

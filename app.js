@@ -157,9 +157,12 @@ function escapeHtml(value){
 }
 
 function formatDateForInput(dateText){
-  const d=dateText ? new Date(dateText) : new Date();
-  if(Number.isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0,10);
+  if(dateText){
+    const d=new Date(dateText+(/^\d{4}-\d{2}-\d{2}$/.test(dateText)?"T00:00:00":""));
+    if(!Number.isNaN(d.getTime())) return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 
 function formatDateForLetter(value){
@@ -360,21 +363,167 @@ function generate(){
   if(draft) fillResult(draft.subject,draft.body,draft.translation,draft.recipient);
 }
 
-$("generate")?.addEventListener("click",generate);
-$("smartContinue")?.addEventListener("click",()=>{
-  const answers=collectSmartAnswers();
-  if(!answers)return;
-  const draft=buildSmartDraft(pendingAnalysis,answers);
-  if(!draft)return;
-  fillResult(draft.subject,draft.body,draft.translation,draft.recipient);
-});
+
+/* BRIEFLA TEMPLATE FORMS 2.0 — every template asks for real data before drafting. */
+const templateFlows={
+  address:{recipient:"Bürgeramt",subject:"Mitteilung über meine neue Anschrift",questions:[
+    {id:"newAddress",label:{pl:"Nowy adres",uk:"Нова адреса"},placeholder:{pl:"Ulica, numer, PLZ, miejscowość",uk:"Вулиця, номер, індекс, місто"},required:true,type:"text"},
+    {id:"effectiveDate",label:{pl:"Od kiedy mieszkasz pod nowym adresem?",uk:"З якої дати ви проживаєте за новою адресою?"},placeholder:{pl:"np. 01.10.2026",uk:"напр. 01.10.2026"},required:true,type:"date"}],
+    build:a=>({subject:"Mitteilung über meine neue Anschrift",recipient:"Bürgeramt",body:`hiermit möchte ich Sie darüber informieren, dass sich meine Anschrift geändert hat.\n\nMeine neue Adresse lautet:\n${a.newAddress}\n\nIch wohne dort seit dem ${formatDateForLetter(a.effectiveDate)}.\n\nIch bitte Sie, meine Daten entsprechend zu aktualisieren und mir die Änderung kurz zu bestätigen.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Informuję o zmianie adresu. Mój nowy adres to: ${a.newAddress}. Pod tym adresem mieszkam od ${formatDateForLetter(a.effectiveDate)}. Proszę o aktualizację moich danych i krótkie potwierdzenie zmiany.`})},
+  registration:{recipient:"Bürgeramt",subject:"Anmeldung",questions:[
+    {id:"address",label:{pl:"Adres nowego miejsca zamieszkania",uk:"Адреса нового місця проживання"},placeholder:{pl:"Ulica, numer, PLZ, miejscowość",uk:"Вулиця, номер, індекс, місто"},required:true,type:"text"},
+    {id:"moveDate",label:{pl:"Data wprowadzenia się",uk:"Дата переїзду"},placeholder:{pl:"",uk:""},required:true,type:"date"}],
+    build:a=>({subject:"Anmeldung",recipient:"Bürgeramt",body:`hiermit möchte ich mich an meiner neuen Wohnadresse anmelden.\n\nMeine neue Anschrift lautet:\n${a.address}\n\nIch bin am ${formatDateForLetter(a.moveDate)} eingezogen.\n\nBitte teilen Sie mir mit, ob für die Anmeldung noch weitere Unterlagen oder ein Termin erforderlich sind.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Chcę zameldować się pod nowym adresem: ${a.address}. Wprowadziłem/am się ${formatDateForLetter(a.moveDate)}. Proszę o informację, czy potrzebne są dodatkowe dokumenty lub termin.`})},
+  deregistration:{recipient:"Bürgeramt",subject:"Abmeldung",questions:[
+    {id:"oldAddress",label:{pl:"Adres, z którego się wymeldowujesz",uk:"Адреса, з якої ви знімаєтесь з реєстрації"},placeholder:{pl:"Ulica, numer, PLZ, miejscowość",uk:"Вулиця, номер, індекс, місто"},required:true,type:"text"},
+    {id:"moveDate",label:{pl:"Data wyprowadzki",uk:"Дата виїзду"},required:true,type:"date"},
+    {id:"newCountry",label:{pl:"Nowy kraj zamieszkania (opcjonalnie)",uk:"Нова країна проживання (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Abmeldung",recipient:"Bürgeramt",body:`hiermit möchte ich mich von meiner bisherigen Wohnadresse abmelden.\n\nBisherige Anschrift:\n${a.oldAddress}\n\nMein Auszugsdatum ist der ${formatDateForLetter(a.moveDate)}.${a.newCountry?`\n\nMein neuer Wohnsitz befindet sich in ${a.newCountry}.`:''}\n\nBitte bestätigen Sie mir die Abmeldung schriftlich und teilen Sie mir mit, ob weitere Unterlagen erforderlich sind.\n\nVielen Dank.`,translation:`Chcę się wymeldować z adresu ${a.oldAddress}. Data wyprowadzki: ${formatDateForLetter(a.moveDate)}.${a.newCountry?` Nowe miejsce zamieszkania: ${a.newCountry}.`:''} Proszę o pisemne potwierdzenie wymeldowania.`})},
+  auslander:{recipient:"Ausländerbehörde",subject:"Anfrage zu meinem Aufenthaltsstatus",questions:[
+    {id:"purpose",label:{pl:"Czego dotyczy Twoja sprawa?",uk:"Чого стосується ваша справа?"},required:true,type:"select",options:[{value:"appointment",pl:"Potrzebuję terminu",uk:"Мені потрібен термін"},{value:"extension",pl:"Przedłużenie dokumentu pobytowego",uk:"Продовження документа на проживання"},{value:"documents",pl:"Chcę wiedzieć, jakie dokumenty są potrzebne",uk:"Хочу дізнатися, які документи потрібні"},{value:"status",pl:"Pytanie o status sprawy",uk:"Питання про статус справи"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]},
+    {id:"documentExpiry",label:{pl:"Data ważności dokumentu pobytowego (opcjonalnie)",uk:"Дата закінчення дії документа на проживання (необов’язково)"},required:false,type:"date"},
+    {id:"details",label:{pl:"Dodatkowe informacje (opcjonalnie)",uk:"Додаткова інформація (необов’язково)"},required:false,type:"textarea"}],
+    build:a=>({subject:"Anfrage zu meinem Aufenthaltsstatus",recipient:"Ausländerbehörde",body:`ich wende mich an Sie bezüglich meines Aufenthaltsstatus.\n\nMein Anliegen betrifft: ${a.purpose}.${a.documentExpiry?`\n\nMein aktuelles Aufenthaltsdokument ist gültig bis zum ${formatDateForLetter(a.documentExpiry)}.`:''}${a.details?`\n\nWeitere Informationen:\n${a.details}`:''}\n\nBitte teilen Sie mir mit, wie ich in dieser Angelegenheit weiter vorgehen soll und welche Unterlagen gegebenenfalls erforderlich sind.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Zwracam się do Ausländerbehörde w sprawie pobytu. Sprawa dotyczy: ${a.purpose}.${a.documentExpiry?` Dokument pobytowy jest ważny do ${formatDateForLetter(a.documentExpiry)}.`:''}${a.details?` Dodatkowe informacje: ${a.details}`:''} Proszę o informację, jak powinienem/powinnam dalej postępować i jakie dokumenty są potrzebne.`})},
+  appointment:{recipient:"Zuständige Stelle",subject:"Bitte um einen Termin",questions:[
+    {id:"purpose",label:{pl:"W jakiej sprawie potrzebujesz terminu?",uk:"У якій справі вам потрібен термін?"},placeholder:{pl:"np. przedłużenie dokumentu",uk:"напр. продовження документа"},required:true,type:"text"},
+    {id:"preferredDate",label:{pl:"Preferowany termin (opcjonalnie)",uk:"Бажаний термін (необов’язково)"},placeholder:{pl:"np. 15.10.2026 po 14:00",uk:"напр. 15.10.2026 після 14:00"},required:false,type:"text"},
+    {id:"reference",label:{pl:"Numer sprawy (opcjonalnie)",uk:"Номер справи (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Bitte um einen Termin",recipient:"Zuständige Stelle",body:`ich möchte gerne einen Termin bei Ihnen vereinbaren.\n\nMein Anliegen betrifft: ${a.purpose}.${a.preferredDate?`\n\nWenn möglich, würde ich gerne einen Termin ${a.preferredDate} erhalten.`:''}${a.reference?`\n\nAktenzeichen / Vorgangsnummer: ${a.reference}`:''}\n\nBitte teilen Sie mir mit, wann ein Termin möglich ist.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Proszę o umówienie terminu w sprawie: ${a.purpose}.${a.preferredDate?` Jeśli to możliwe, preferuję termin ${a.preferredDate}.`:''}${a.reference?` Numer sprawy: ${a.reference}.`:''} Proszę o informację, kiedy termin będzie możliwy.`})},
+  documents:{recipient:"Zuständige Stelle",subject:"Nachreichung von Unterlagen",questions:[
+    {id:"documents",label:{pl:"Jakie dokumenty dosyłasz?",uk:"Які документи ви надсилаєте?"},placeholder:{pl:"np. umowa o pracę, Lohnabrechnung",uk:"напр. трудовий договір, розрахунковий лист"},required:true,type:"textarea"},
+    {id:"reference",label:{pl:"Numer sprawy / Aktenzeichen (opcjonalnie)",uk:"Номер справи / Aktenzeichen (необов’язково)"},required:false,type:"text"},
+    {id:"purpose",label:{pl:"Czego dotyczą dokumenty? (opcjonalnie)",uk:"Чого стосуються документи? (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Nachreichung von Unterlagen",recipient:"Zuständige Stelle",body:`hiermit reiche ich die folgenden Unterlagen zu meinem Vorgang nach:\n\n${a.documents}${a.reference?`\n\nAktenzeichen / Vorgangsnummer: ${a.reference}`:''}${a.purpose?`\n\nDie Unterlagen betreffen: ${a.purpose}.`:''}\n\nBitte bestätigen Sie mir kurz den Eingang der Unterlagen. Falls noch weitere Dokumente benötigt werden, teilen Sie mir dies bitte mit.\n\nVielen Dank.`,translation:`Dosyłam następujące dokumenty: ${a.documents}.${a.reference?` Numer sprawy: ${a.reference}.`:''}${a.purpose?` Dokumenty dotyczą: ${a.purpose}.`:''} Proszę o potwierdzenie ich otrzymania i informację, jeśli potrzebne są kolejne dokumenty.`})},
+  appeal:{recipient:"Zuständige Stelle",subject:"Widerspruch gegen einen Bescheid",questions:[
+    {id:"decisionDate",label:{pl:"Data decyzji / Bescheid",uk:"Дата рішення / Bescheid"},required:true,type:"date"},
+    {id:"reference",label:{pl:"Numer decyzji / Aktenzeichen (opcjonalnie)",uk:"Номер рішення / Aktenzeichen (необов’язково)"},required:false,type:"text"},
+    {id:"reason",label:{pl:"Dlaczego się odwołujesz? (opcjonalnie)",uk:"Чому ви подаєте заперечення? (необов’язково)"},required:false,type:"textarea"}],
+    build:a=>({subject:"Widerspruch gegen einen Bescheid",recipient:"Zuständige Stelle",body:`hiermit lege ich gegen den Bescheid vom ${formatDateForLetter(a.decisionDate)} Widerspruch ein.${a.reference?`\n\nAktenzeichen: ${a.reference}`:''}${a.reason?`\n\nMeine Begründung:\n${a.reason}`:''}\n\nIch bitte Sie, den Bescheid erneut zu prüfen und meinen Widerspruch zu berücksichtigen. Bitte bestätigen Sie mir den Eingang meines Widerspruchs schriftlich.\n\nVielen Dank.`,translation:`Składam sprzeciw od decyzji z dnia ${formatDateForLetter(a.decisionDate)}.${a.reference?` Numer sprawy: ${a.reference}.`:''}${a.reason?` Uzasadnienie: ${a.reason}`:''} Proszę o ponowne rozpatrzenie decyzji i pisemne potwierdzenie otrzymania sprzeciwu.`})},
+  requestDecision:{recipient:"Zuständige Stelle",subject:"Bitte um erneute Prüfung",questions:[
+    {id:"matter",label:{pl:"Czego dotyczy sprawa lub decyzja?",uk:"Чого стосується справа або рішення?"},required:true,type:"textarea"},
+    {id:"decisionDate",label:{pl:"Data decyzji (opcjonalnie)",uk:"Дата рішення (необов’язково)"},required:false,type:"date"},
+    {id:"reason",label:{pl:"Dlaczego prosisz o ponowne rozpatrzenie?",uk:"Чому ви просите повторно розглянути справу?"},required:true,type:"textarea"}],
+    build:a=>({subject:"Bitte um erneute Prüfung",recipient:"Zuständige Stelle",body:`ich bitte Sie, meinen Vorgang bzw. die getroffene Entscheidung erneut zu prüfen.\n\nSachverhalt:\n${a.matter}${a.decisionDate?`\n\nDatum der Entscheidung: ${formatDateForLetter(a.decisionDate)}`:''}\n\nGrund für meine Bitte um erneute Prüfung:\n${a.reason}\n\nBitte teilen Sie mir das Ergebnis der Prüfung schriftlich mit.\n\nVielen Dank.`,translation:`Proszę o ponowne rozpatrzenie mojej sprawy/decyzji. Sprawa dotyczy: ${a.matter}.${a.decisionDate?` Data decyzji: ${formatDateForLetter(a.decisionDate)}.`:''} Powód prośby: ${a.reason}. Proszę o pisemną informację o wyniku.`})},
+  jobcenter:{recipient:"Jobcenter",subject:"Mitteilung an das Jobcenter",questions:[
+    {id:"matter",label:{pl:"Co chcesz zgłosić Jobcenter?",uk:"Що ви хочете повідомити Jobcenter?"},required:true,type:"select",options:[{value:"work",pl:"Nowa praca / zmiana pracy",uk:"Нова робота / зміна роботи"},{value:"income",pl:"Zmiana dochodu",uk:"Зміна доходу"},{value:"address",pl:"Zmiana adresu",uk:"Зміна адреси"},{value:"documents",pl:"Dosłanie dokumentów",uk:"Надсилання документів"},{value:"other",pl:"Inna zmiana",uk:"Інша зміна"}]},
+    {id:"effectiveDate",label:{pl:"Od kiedy obowiązuje zmiana? (opcjonalnie)",uk:"З якої дати діє зміна? (необов’язково)"},required:false,type:"date"},
+    {id:"details",label:{pl:"Opisz zmianę",uk:"Опишіть зміну"},required:true,type:"textarea"}],
+    build:a=>({subject:"Mitteilung an das Jobcenter",recipient:"Jobcenter",body:`hiermit möchte ich Sie über eine Änderung meiner persönlichen bzw. beruflichen Situation informieren.\n\nDie Änderung betrifft: ${a.matter}.${a.effectiveDate?`\nSie gilt ab dem ${formatDateForLetter(a.effectiveDate)}.`:''}\n\nDetails:\n${a.details}\n\nBitte berücksichtigen Sie diese Information in meinem Vorgang und teilen Sie mir mit, ob weitere Unterlagen benötigt werden.\n\nVielen Dank.`,translation:`Informuję Jobcenter o zmianie mojej sytuacji. Zmiana dotyczy: ${a.matter}.${a.effectiveDate?` Obowiązuje od ${formatDateForLetter(a.effectiveDate)}.`:''} Szczegóły: ${a.details}. Proszę uwzględnić tę informację w mojej sprawie i poinformować mnie, czy potrzebne są dodatkowe dokumenty.`})},
+  newJob:{recipient:"Jobcenter",subject:"Mitteilung über die Aufnahme einer Beschäftigung",questions:[
+    {id:"startDate",label:{pl:"Od kiedy zaczynasz pracę?",uk:"З якої дати ви починаєте працювати?"},required:true,type:"date"},
+    {id:"employer",label:{pl:"Nazwa pracodawcy",uk:"Назва роботодавця"},required:true,type:"text"},
+    {id:"salary",label:{pl:"Wynagrodzenie brutto (opcjonalnie)",uk:"Зарплата брутто (необов’язково)"},placeholder:{pl:"np. 2.500 €",uk:"напр. 2 500 €"},required:false,type:"text"}],
+    build:a=>({subject:"Mitteilung über die Aufnahme einer Beschäftigung",recipient:"Jobcenter",body:`hiermit informiere ich Sie darüber, dass ich ab dem ${formatDateForLetter(a.startDate)} eine Beschäftigung bei ${a.employer} aufnehme.${a.salary?`\n\nDas voraussichtliche Bruttoeinkommen beträgt ${a.salary}.`:''}\n\nIch bitte Sie, diese Änderung bei der Berechnung meiner Leistungen zu berücksichtigen. Falls Sie weitere Unterlagen oder Nachweise benötigen, teilen Sie mir bitte mit, welche Dokumente ich einreichen soll.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Informuję Jobcenter, że od ${formatDateForLetter(a.startDate)} rozpoczynam pracę u ${a.employer}.${a.salary?` Przewidywane wynagrodzenie brutto: ${a.salary}.`:''} Proszę uwzględnić tę zmianę przy ustalaniu świadczeń i poinformować mnie, jeśli potrzebne są dodatkowe dokumenty.`})},
+  incomeChange:{recipient:"Jobcenter",subject:"Mitteilung über eine Einkommensänderung",questions:[
+    {id:"changeDate",label:{pl:"Od kiedy zmienił się dochód?",uk:"З якої дати змінився дохід?"},required:true,type:"date"},
+    {id:"newIncome",label:{pl:"Nowy dochód brutto",uk:"Новий дохід брутто"},required:true,type:"text"},
+    {id:"proof",label:{pl:"Jaki dokument potwierdza zmianę? (opcjonalnie)",uk:"Який документ підтверджує зміну? (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Mitteilung über eine Einkommensänderung",recipient:"Jobcenter",body:`hiermit informiere ich Sie darüber, dass sich mein Einkommen ab dem ${formatDateForLetter(a.changeDate)} geändert hat.\n\nMein neues Bruttoeinkommen beträgt ${a.newIncome}.${a.proof?`\n\nAls Nachweis füge ich ${a.proof} bei.`:''}\n\nBitte berücksichtigen Sie diese Änderung bei meinem Vorgang und teilen Sie mir mit, welche weiteren Nachweise Sie gegebenenfalls benötigen.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Informuję Jobcenter o zmianie dochodu od ${formatDateForLetter(a.changeDate)}. Nowy dochód brutto wynosi ${a.newIncome}.${a.proof?` Jako potwierdzenie dołączam ${a.proof}.`:''} Proszę uwzględnić zmianę w mojej sprawie i poinformować mnie, jeśli potrzebne są dodatkowe dokumenty.`})},
+  familykasse:{recipient:"Familienkasse",subject:"Anfrage an die Familienkasse",questions:[
+    {id:"matter",label:{pl:"Czego dotyczy sprawa?",uk:"Чого стосується справа?"},required:true,type:"select",options:[{value:"status",pl:"Pytanie o status Kindergeld",uk:"Питання про статус Kindergeld"},{value:"documents",pl:"Brakujące dokumenty",uk:"Відсутні документи"},{value:"change",pl:"Zmiana danych",uk:"Зміна даних"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]},
+    {id:"childName",label:{pl:"Imię i nazwisko dziecka (opcjonalnie)",uk:"Ім’я та прізвище дитини (необов’язково)"},required:false,type:"text"},
+    {id:"reference",label:{pl:"Numer Kindergeld / Aktenzeichen (opcjonalnie)",uk:"Номер Kindergeld / Aktenzeichen (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Anfrage an die Familienkasse",recipient:"Familienkasse",body:`ich wende mich an Sie bezüglich meiner Kindergeldangelegenheit.\n\nMein Anliegen betrifft: ${a.matter}.${a.childName?`\n\nName des Kindes: ${a.childName}`:''}${a.reference?`\nAktenzeichen / Kindergeldnummer: ${a.reference}`:''}\n\nBitte informieren Sie mich über den aktuellen Stand bzw. teilen Sie mir mit, welche Unterlagen oder Angaben noch benötigt werden.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Zwracam się do Familienkasse w sprawie Kindergeld. Sprawa dotyczy: ${a.matter}.${a.childName?` Dziecko: ${a.childName}.`:''}${a.reference?` Numer sprawy: ${a.reference}.`:''} Proszę o informację o stanie sprawy lub o brakujących dokumentach.`})},
+  kindergeld:{recipient:"Familienkasse",subject:"Antrag auf Kindergeld",questions:[
+    {id:"childName",label:{pl:"Imię i nazwisko dziecka",uk:"Ім’я та прізвище дитини"},required:true,type:"text"},
+    {id:"birthDate",label:{pl:"Data urodzenia dziecka",uk:"Дата народження дитини"},required:true,type:"date"},
+    {id:"additional",label:{pl:"Dodatkowe informacje (opcjonalnie)",uk:"Додаткова інформація (необов’язково)"},required:false,type:"textarea"}],
+    build:a=>({subject:"Antrag auf Kindergeld",recipient:"Familienkasse",body:`hiermit möchte ich Kindergeld für mein Kind beantragen.\n\nName des Kindes: ${a.childName}\nGeburtsdatum: ${formatDateForLetter(a.birthDate)}${a.additional?`\n\nWeitere Informationen:\n${a.additional}`:''}\n\nDie erforderlichen Unterlagen füge ich diesem Schreiben bei. Sollten noch Unterlagen oder Nachweise fehlen, teilen Sie mir bitte mit, welche Dokumente noch benötigt werden.\n\nVielen Dank für die Bearbeitung meines Antrags.`,translation:`Składam wniosek o Kindergeld na dziecko ${a.childName}, urodzone ${formatDateForLetter(a.birthDate)}.${a.additional?` Dodatkowe informacje: ${a.additional}`:''} Wymagane dokumenty dołączam. Proszę o informację, jeśli czegoś jeszcze brakuje.`})},
+  finanzamt:{recipient:"Finanzamt",subject:"Anfrage an das Finanzamt",questions:[
+    {id:"matter",label:{pl:"Czego dotyczy sprawa w Finanzamt?",uk:"Чого стосується справа у Finanzamt?"},required:true,type:"select",options:[{value:"bank",pl:"Zmiana konta bankowego",uk:"Зміна банківського рахунку"},{value:"certificate",pl:"Zaświadczenie / informacja",uk:"Довідка / інформація"},{value:"taxReturn",pl:"Deklaracja podatkowa",uk:"Податкова декларація"},{value:"payment",pl:"Płatność / zwrot podatku",uk:"Платіж / повернення податку"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]},
+    {id:"details",label:{pl:"Opisz sprawę",uk:"Опишіть справу"},required:true,type:"textarea"},
+    {id:"reference",label:{pl:"Steuernummer / Aktenzeichen (opcjonalnie)",uk:"Steuernummer / Aktenzeichen (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Anfrage an das Finanzamt",recipient:"Finanzamt",body:`ich wende mich an Sie bezüglich meiner steuerlichen Angelegenheit.\n\nMein Anliegen betrifft: ${a.matter}.\n\n${a.details}${a.reference?`\n\nSteuernummer / Aktenzeichen: ${a.reference}`:''}\n\nBitte teilen Sie mir mit, wie ich in dieser Angelegenheit weiter vorgehen soll und ob Sie weitere Unterlagen oder Informationen benötigen.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Zwracam się do Finanzamt w sprawie: ${a.matter}. Szczegóły: ${a.details}.${a.reference?` Numer sprawy / Steuernummer: ${a.reference}.`:''} Proszę o informację, jak powinienem/powinnam dalej postępować i czy potrzebne są dodatkowe dokumenty.`})},
+  taxDocuments:{recipient:"Finanzamt",subject:"Nachreichung von Unterlagen an das Finanzamt",questions:[
+    {id:"documents",label:{pl:"Jakie dokumenty dosyłasz?",uk:"Які документи ви надсилаєте?"},required:true,type:"textarea"},
+    {id:"reference",label:{pl:"Steuernummer / Aktenzeichen (opcjonalnie)",uk:"Steuernummer / Aktenzeichen (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Nachreichung von Unterlagen an das Finanzamt",recipient:"Finanzamt",body:`hiermit reiche ich die folgenden Unterlagen zu meinem steuerlichen Vorgang nach:\n\n${a.documents}${a.reference?`\n\nSteuernummer / Aktenzeichen: ${a.reference}`:''}\n\nBitte bestätigen Sie mir kurz den Eingang der Unterlagen. Falls noch weitere Dokumente benötigt werden, teilen Sie mir dies bitte mit.\n\nVielen Dank.`,translation:`Dosyłam do Finanzamt następujące dokumenty: ${a.documents}.${a.reference?` Steuernummer / numer sprawy: ${a.reference}.`:''} Proszę o potwierdzenie otrzymania dokumentów i informację, jeśli potrzebne są kolejne.`})},
+  healthInsurance:{recipient:"Krankenkasse",subject:"Anfrage an die Krankenkasse",questions:[
+    {id:"matter",label:{pl:"Czego dotyczy sprawa?",uk:"Чого стосується справа?"},required:true,type:"select",options:[{value:"insurance",pl:"Ubezpieczenie / członkostwo",uk:"Страхування / членство"},{value:"certificate",pl:"Zaświadczenie",uk:"Довідка"},{value:"family",pl:"Ubezpieczenie rodziny",uk:"Страхування сім’ї"},{value:"payment",pl:"Składki / płatność",uk:"Внески / платіж"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]},
+    {id:"details",label:{pl:"Opisz, czego potrzebujesz",uk:"Опишіть, що вам потрібно"},required:true,type:"textarea"},
+    {id:"memberNumber",label:{pl:"Numer ubezpieczenia (opcjonalnie)",uk:"Номер страхування (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Anfrage an die Krankenkasse",recipient:"Krankenkasse",body:`ich wende mich an Sie bezüglich meiner Krankenversicherung.\n\nMein Anliegen betrifft: ${a.matter}.\n\n${a.details}${a.memberNumber?`\n\nVersicherungsnummer: ${a.memberNumber}`:''}\n\nBitte teilen Sie mir mit, wie ich weiter vorgehen soll und ob weitere Unterlagen benötigt werden.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Zwracam się do kasy chorych w sprawie: ${a.matter}. Potrzebuję: ${a.details}.${a.memberNumber?` Numer ubezpieczenia: ${a.memberNumber}.`:''} Proszę o informację, co powinienem/powinnam zrobić dalej i czy potrzebne są dodatkowe dokumenty.`})},
+  sick:{recipient:"Arbeitgeber",subject:"Krankmeldung",questions:[
+    {id:"sickFrom",label:{pl:"Od kiedy jesteś niezdolny/a do pracy?",uk:"З якої дати ви непрацездатні?"},required:true,type:"date"},
+    {id:"expectedEnd",label:{pl:"Przewidywany koniec niezdolności (opcjonalnie)",uk:"Орієнтовна дата закінчення непрацездатності (необов’язково)"},required:false,type:"date"},
+    {id:"certificate",label:{pl:"Czy zaświadczenie jest dostępne?",uk:"Чи є довідка?"},required:false,type:"select",options:[{value:"available",pl:"Tak, jest dostępne",uk:"Так, є"},{value:"sent",pl:"Zostało przekazane",uk:"Вже передана"},{value:"unknown",pl:"Nie wiem / nie dotyczy",uk:"Не знаю / не стосується"}]}],
+    build:a=>({subject:"Krankmeldung",recipient:"Arbeitgeber",body:`hiermit möchte ich Sie darüber informieren, dass ich seit dem ${formatDateForLetter(a.sickFrom)} krankheitsbedingt arbeitsunfähig bin.${a.expectedEnd?`\n\nVoraussichtlich bin ich bis zum ${formatDateForLetter(a.expectedEnd)} arbeitsunfähig.`:''}${a.certificate&&a.certificate!=="unknown"?`\n\nDie Arbeitsunfähigkeitsbescheinigung ${a.certificate==="available"?"liegt vor":"wurde bereits übermittelt"}.`:''}\n\nVielen Dank für Ihr Verständnis.`,translation:`Informuję, że od ${formatDateForLetter(a.sickFrom)} jestem niezdolny/a do pracy z powodu choroby.${a.expectedEnd?` Przewidywany koniec niezdolności: ${formatDateForLetter(a.expectedEnd)}.`:''}${a.certificate&&a.certificate!=="unknown"?` Zaświadczenie ${a.certificate==="available"?"jest dostępne":"zostało już przekazane"}.`:''}`})},
+  employer:{recipient:"Arbeitgeber",subject:"Anfrage an den Arbeitgeber",questions:[
+    {id:"matter",label:{pl:"Czego potrzebujesz od pracodawcy?",uk:"Що вам потрібно від роботодавця?"},required:true,type:"select",options:[{value:"certificate",pl:"Zaświadczenie",uk:"Довідка"},{value:"document",pl:"Dokument / kopia",uk:"Документ / копія"},{value:"information",pl:"Informacja",uk:"Інформація"},{value:"appointment",pl:"Rozmowa / termin",uk:"Розмова / зустріч"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]},
+    {id:"details",label:{pl:"Co dokładnie ma otrzymać / zrobić pracodawca?",uk:"Що саме має надати / зробити роботодавець?"},required:true,type:"textarea"}],
+    build:a=>({subject:"Anfrage an den Arbeitgeber",recipient:"Arbeitgeber",body:`ich wende mich an Sie bezüglich meines Arbeitsverhältnisses.\n\nMein Anliegen betrifft: ${a.matter}.\n\n${a.details}\n\nBitte teilen Sie mir mit, wann ich die benötigte Information bzw. Bescheinigung erhalten kann.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Zwracam się do pracodawcy w sprawie: ${a.matter}. Potrzebuję, aby pracodawca: ${a.details}. Proszę o informację, kiedy mogę otrzymać potrzebną informację lub zaświadczenie.`})},
+  absence:{recipient:"Arbeitgeber",subject:"Erklärung meiner Abwesenheit",questions:[
+    {id:"date",label:{pl:"Data nieobecności",uk:"Дата відсутності"},required:true,type:"date"},
+    {id:"reason",label:{pl:"Powód nieobecności",uk:"Причина відсутності"},required:true,type:"textarea"}],
+    build:a=>({subject:"Erklärung meiner Abwesenheit",recipient:"Arbeitgeber",body:`hiermit möchte ich meine Abwesenheit am ${formatDateForLetter(a.date)} kurz erklären.\n\nDer Grund für meine Abwesenheit war:\n${a.reason}\n\nIch bitte um Verständnis und entschuldige mich für die entstandenen Unannehmlichkeiten.\n\nFür Rückfragen stehe ich gerne zur Verfügung.`,translation:`Wyjaśniam moją nieobecność w dniu ${formatDateForLetter(a.date)}. Powód: ${a.reason}. Proszę o wyrozumiałość i przepraszam za powstałe niedogodności.`})},
+  rentTermination:{recipient:"Vermieter / Hausverwaltung",subject:"Kündigung des Mietvertrags",questions:[
+    {id:"address",label:{pl:"Adres wynajmowanego mieszkania",uk:"Адреса орендованого житла"},required:true,type:"text"},
+    {id:"terminationDate",label:{pl:"Data zakończenia umowy (opcjonalnie)",uk:"Дата завершення договору (необов’язково)"},required:false,type:"date"},
+    {id:"reason",label:{pl:"Powód wypowiedzenia (opcjonalnie)",uk:"Причина розірвання (необов’язково)"},required:false,type:"textarea"}],
+    build:a=>({subject:"Kündigung des Mietvertrags",recipient:"Vermieter / Hausverwaltung",body:`hiermit kündige ich den Mietvertrag für die Wohnung ${a.address} fristgerecht zum nächstmöglichen Zeitpunkt.${a.terminationDate?`\n\nSofern möglich, bitte ich um Beendigung des Mietverhältnisses zum ${formatDateForLetter(a.terminationDate)}.`:''}${a.reason?`\n\nGrund der Kündigung: ${a.reason}`:''}\n\nBitte bestätigen Sie mir den Eingang dieser Kündigung sowie den Beendigungstermin schriftlich.\n\nVielen Dank.`,translation:`Wypowiadam umowę najmu mieszkania przy adresie ${a.address} w najbliższym możliwym terminie.${a.terminationDate?` Jeśli to możliwe, proszę o zakończenie umowy ${formatDateForLetter(a.terminationDate)}.`:''}${a.reason?` Powód: ${a.reason}.`:''} Proszę o pisemne potwierdzenie otrzymania wypowiedzenia i daty zakończenia umowy.`})},
+  rentIssue:{recipient:"Vermieter / Hausverwaltung",subject:"Anfrage wegen eines Problems in der Wohnung",questions:[
+    {id:"address",label:{pl:"Adres mieszkania",uk:"Адреса житла"},required:true,type:"text"},
+    {id:"problem",label:{pl:"Co jest problemem?",uk:"У чому проблема?"},required:true,type:"textarea"},
+    {id:"since",label:{pl:"Od kiedy występuje problem? (opcjonalnie)",uk:"Відколи існує проблема? (необов’язково)"},required:false,type:"date"}],
+    build:a=>({subject:"Anfrage wegen eines Problems in der Wohnung",recipient:"Vermieter / Hausverwaltung",body:`ich wende mich an Sie bezüglich eines Problems in meiner Wohnung in ${a.address}.\n\nDas Problem besteht darin:\n${a.problem}${a.since?`\n\nDas Problem besteht seit dem ${formatDateForLetter(a.since)}.`:''}\n\nBitte teilen Sie mir mit, wie wir das Problem lösen können und wann eine Rückmeldung bzw. ein Termin möglich ist.\n\nVielen Dank.`,translation:`Zwracam się w sprawie problemu w mieszkaniu przy ${a.address}. Problem polega na: ${a.problem}.${a.since?` Występuje od ${formatDateForLetter(a.since)}.`:''} Proszę o informację, jak można go rozwiązać i kiedy możliwa jest odpowiedź lub termin.`})},
+  carRegistration:{recipient:"Zulassungsstelle",subject:"Anfrage zur Fahrzeugzulassung",questions:[
+    {id:"matter",label:{pl:"Czego potrzebujesz?",uk:"Що вам потрібно?"},required:true,type:"select",options:[{value:"registration",pl:"Rejestracja samochodu",uk:"Реєстрація автомобіля"},{value:"change",pl:"Zmiana danych pojazdu / właściciela",uk:"Зміна даних автомобіля / власника"},{value:"documents",pl:"Informacja o dokumentach",uk:"Інформація про документи"},{value:"appointment",pl:"Termin",uk:"Термін"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]},
+    {id:"vehicle",label:{pl:"Dane samochodu (np. marka, model, rejestracja/VIN)",uk:"Дані автомобіля (марка, модель, номер/VIN)"},required:true,type:"text"},
+    {id:"details",label:{pl:"Dodatkowe informacje (opcjonalnie)",uk:"Додаткова інформація (необов’язково)"},required:false,type:"textarea"}],
+    build:a=>({subject:"Anfrage zur Fahrzeugzulassung",recipient:"Zulassungsstelle",body:`ich wende mich an Sie bezüglich der Fahrzeugzulassung.\n\nMein Anliegen betrifft: ${a.matter}.\n\nFahrzeugdaten: ${a.vehicle}${a.details?`\n\nWeitere Informationen:\n${a.details}`:''}\n\nBitte teilen Sie mir mit, welche Unterlagen erforderlich sind und ob ich einen Termin benötige.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Zwracam się do Zulassungsstelle w sprawie: ${a.matter}. Dane samochodu: ${a.vehicle}.${a.details?` Dodatkowe informacje: ${a.details}`:''} Proszę o informację, jakie dokumenty są potrzebne i czy muszę umówić termin.`})},
+  license:{recipient:"Führerscheinstelle",subject:"Anfrage bezüglich meines Führerscheins",questions:[
+    {id:"matter",label:{pl:"Czego dotyczy sprawa prawa jazdy?",uk:"Чого стосується справа щодо водійського посвідчення?"},required:true,type:"select",options:[{value:"exchange",pl:"Wymiana prawa jazdy",uk:"Обмін посвідчення водія"},{value:"extension",pl:"Przedłużenie / odnowienie",uk:"Продовження / поновлення"},{value:"documents",pl:"Wymagane dokumenty",uk:"Необхідні документи"},{value:"appointment",pl:"Termin",uk:"Термін"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]},
+    {id:"details",label:{pl:"Dodatkowe informacje",uk:"Додаткова інформація"},required:true,type:"textarea"}],
+    build:a=>({subject:"Anfrage bezüglich meines Führerscheins",recipient:"Führerscheinstelle",body:`ich wende mich an Sie bezüglich meines Führerscheins.\n\nMein Anliegen betrifft: ${a.matter}.\n\n${a.details}\n\nBitte teilen Sie mir mit, welche Unterlagen erforderlich sind und wie ich weiter vorgehen soll.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Zwracam się do Führerscheinstelle w sprawie: ${a.matter}. Dodatkowe informacje: ${a.details}. Proszę o informację, jakie dokumenty są potrzebne i co powinienem/powinnam zrobić dalej.`})},
+  pension:{recipient:"Deutsche Rentenversicherung",subject:"Anfrage an die Deutsche Rentenversicherung",questions:[
+    {id:"matter",label:{pl:"Czego dotyczy sprawa?",uk:"Чого стосується справа?"},required:true,type:"select",options:[{value:"insurance",pl:"Przebieg ubezpieczenia",uk:"Страховий стаж"},{value:"pension",pl:"Emerytura / świadczenie",uk:"Пенсія / виплата"},{value:"documents",pl:"Dokumenty / zaświadczenie",uk:"Документи / довідка"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]},
+    {id:"details",label:{pl:"Opisz, czego potrzebujesz",uk:"Опишіть, що вам потрібно"},required:true,type:"textarea"},
+    {id:"insuranceNumber",label:{pl:"Numer ubezpieczenia (opcjonalnie)",uk:"Страховий номер (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Anfrage an die Deutsche Rentenversicherung",recipient:"Deutsche Rentenversicherung",body:`ich wende mich an Sie bezüglich meiner Rentenversicherung bzw. meines Versicherungsverlaufs.\n\nMein Anliegen betrifft: ${a.matter}.\n\n${a.details}${a.insuranceNumber?`\n\nVersicherungsnummer: ${a.insuranceNumber}`:''}\n\nBitte teilen Sie mir mit, ob weitere Unterlagen oder Angaben benötigt werden.\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Zwracam się do Deutsche Rentenversicherung w sprawie: ${a.matter}. Potrzebuję: ${a.details}.${a.insuranceNumber?` Numer ubezpieczenia: ${a.insuranceNumber}.`:''} Proszę o informację, czy potrzebne są dodatkowe dokumenty lub dane.`})},
+  contribution:{recipient:"Beitragsservice",subject:"Anfrage zum Rundfunkbeitrag",questions:[
+    {id:"matter",label:{pl:"Czego dotyczy sprawa?",uk:"Чого стосується справа?"},required:true,type:"select",options:[{value:"move",pl:"Przeprowadzka / zmiana adresu",uk:"Переїзд / зміна адреси"},{value:"payment",pl:"Płatność / zaległość",uk:"Платіж / заборгованість"},{value:"exemption",pl:"Zwolnienie z opłaty",uk:"Звільнення від сплати"},{value:"account",pl:"Dane / konto Beitragsservice",uk:"Дані / рахунок Beitragsservice"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]},
+    {id:"details",label:{pl:"Opisz sprawę",uk:"Опишіть справу"},required:true,type:"textarea"},
+    {id:"contributionNumber",label:{pl:"Beitragsnummer (opcjonalnie)",uk:"Beitragsnummer (необов’язково)"},required:false,type:"text"}],
+    build:a=>({subject:"Anfrage zum Rundfunkbeitrag",recipient:"Beitragsservice",body:`ich wende mich an Sie bezüglich meines Rundfunkbeitrags.\n\nMein Anliegen betrifft: ${a.matter}.\n\n${a.details}${a.contributionNumber?`\n\nBeitragsnummer: ${a.contributionNumber}`:''}\n\nBitte prüfen Sie meinen Vorgang und teilen Sie mir mit, wie ich weiter vorgehen soll bzw. ob weitere Unterlagen benötigt werden.\n\nVielen Dank.`,translation:`Zwracam się do Beitragsservice w sprawie: ${a.matter}. Szczegóły: ${a.details}.${a.contributionNumber?` Beitragsnummer: ${a.contributionNumber}.`:''} Proszę o sprawdzenie sprawy i informację, co powinienem/powinnam zrobić dalej.`})},
+  other:{recipient:"",subject:"Anfrage",questions:[
+    {id:"recipient",label:{pl:"Do jakiego urzędu / osoby kierujesz pismo?",uk:"До якої установи / особи ви звертаєтесь?"},required:true,type:"text"},
+    {id:"purpose",label:{pl:"Jaki jest cel pisma?",uk:"Яка мета листа?"},required:true,type:"textarea"},
+    {id:"action",label:{pl:"Czego oczekujesz od odbiorcy?",uk:"Чого ви очікуєте від одержувача?"},required:true,type:"textarea"}],
+    build:a=>({subject:"Anfrage",recipient:a.recipient,body:`hiermit wende ich mich mit folgendem Anliegen an Sie.\n\n${a.purpose}\n\nIch bitte Sie, mein Anliegen zu prüfen und die erforderlichen Schritte zu veranlassen.\n\nIch bitte um folgende Rückmeldung bzw. Handlung:\n${a.action}\n\nVielen Dank für Ihre Rückmeldung.`,translation:`Zwracam się do Państwa w sprawie: ${a.purpose}. Proszę o następujące działanie lub odpowiedź: ${a.action}.`})}
+};
+
+function openTemplateFlow(key){
+  const flow=templateFlows[key]||templateFlows.other;
+  pendingAnalysis={templateKey:key,recipient:flow.recipient,subject:flow.subject,questions:flow.questions||[]};
+  renderSmartQuestions(pendingAnalysis);
+}
+
+function buildTemplateDraft(key,answers){
+  const flow=templateFlows[key]||templateFlows.other;
+  return flow.build(answers);
+}
+
+// Replace template buttons with real, template-specific forms — never expose [Datum] placeholders.
+document.querySelectorAll("[data-template]").forEach(btn=>btn.addEventListener("click",()=>openTemplateFlow(btn.dataset.template)));
+
+// The smart-question Continue button handles both free-form analysis and template forms.
+const oldSmartContinue=$("smartContinue");
+if(oldSmartContinue){
+  oldSmartContinue.addEventListener("click",()=>{
+    const answers=collectSmartAnswers();
+    if(!answers)return;
+    if(pendingAnalysis?.templateKey){
+      const draft=buildTemplateDraft(pendingAnalysis.templateKey,answers);
+      if(draft) fillResult(draft.subject,draft.body,draft.translation,draft.recipient);
+      return;
+    }
+    const draft=buildSmartDraft(pendingAnalysis,answers);
+    if(draft) fillResult(draft.subject,draft.body,draft.translation,draft.recipient);
+  });
+}
 
 $("generate")?.addEventListener("click",generate);
 
-document.querySelectorAll("[data-template]").forEach(btn=>btn.addEventListener("click",()=>{
-  const key=btn.dataset.template, t=templates[key]||templates.other;
-  fillResult(t.title,t.body,polishFor(key),t.recipient||"");
-}));
 
 $("templateSearch")?.addEventListener("input",e=>{
   const q=e.target.value.trim().toLowerCase();
@@ -395,7 +544,8 @@ $("copyPolish")?.addEventListener("click",async()=>{
   try{await navigator.clipboard.writeText($("translation").textContent);$("copyPolish").textContent="✓  Skopiowano";setTimeout(()=>$("copyPolish").textContent="PL  Tłumaczenie",1600)}catch(e){}}
 );
 
-document.querySelectorAll("#templateEditor input, #templateEditor textarea").forEach(el=>el.addEventListener("input",updateTemplatePreview));
+document.querySelectorAll("#templateEditor input, #templateEditor textarea").forEach(el=>{el.addEventListener("input",updateTemplatePreview);el.addEventListener("change",updateTemplatePreview);});
+$("editDate")?.addEventListener("change",updateTemplatePreview);
 $("focusEditor")?.addEventListener("click",()=>$("editSubject")?.focus());
 
 $("saveText")?.addEventListener("click",()=>{
