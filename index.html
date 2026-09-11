@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7faff">
+  <title>BRIEFLA — Twoje sprawy w Niemczech. Prościej.</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><img src="logo.png" alt="BRIEFLA"></div>
+      <nav>
+        <button class="nav-item active" data-nav="home"><span>⌂</span>Start</button>
+        <button class="nav-item" data-nav="categories"><span>▦</span>Kategorie</button>
+        <button class="nav-item" data-nav="letters"><span>▤</span>Moje pisma</button>
+        <button class="nav-item" data-nav="templates"><span>▤</span>Szablony</button>
+        <button class="nav-item" data-nav="profile"><span>♙</span>Profil</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="nav-item"><span>⚙</span>Ustawienia</button>
+        <button class="nav-item"><span>?</span>Pomoc / FAQ</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="top-controls"><button>🇵🇱 &nbsp; PL &nbsp;⌄</button></div>
+
+      <section id="home" class="view active">
+        <div class="hero-card">
+          <img class="hero-logo" src="logo.png" alt="BRIEFLA">
+          <h1 class="hero-title">Twoje pisma po niemiecku.<br>Prosto. Szybko. Bez stresu.</h1>
+
+          <div class="hero-content">
+            <ul class="benefits">
+              <li>E-maile i listy do urzędów</li>
+              <li>Gotowe szablony</li>
+              <li>Tłumaczenia i wyjaśnienia</li>
+              <li>Krok po kroku</li>
+            </ul>
+            <button class="cta" data-go="categories">Zacznij teraz <span>→</span></button>
+          </div>
+
+          <div class="illustration" aria-hidden="true"><img src="hero-reference.png" alt=""></div>
+        </div>
+<div class="feature-row">
+          <article><span class="feature-icon">▤</span><div><h3>Wybierz kategorię</h3><p>Znajdź odpowiedni temat Twojej sprawy.</p></div></article>
+          <article><span class="feature-icon">✎</span><div><h3>Opisz swoją sprawę</h3><p>Napisz po polsku, co chcesz przekazać.</p></div></article>
+          <article><span class="feature-icon">▣</span><div><h3>Otrzymaj gotowe pismo</h3><p>Pobierz, skopiuj lub wyślij bezpośrednio.</p></div></article>
+        </div>
+      </section>
+
+      <section id="categories" class="view">
+        <header><button class="back" data-back>‹</button><div><small>KROK 1</small><h2>Wybierz kategorię</h2></div><button class="round-help">?</button></header>
+        <div class="category-grid">
+          <button class="cat" data-category="Urząd / Amt"><span>🏛</span><b>Urząd / Amt</b><small>np. Bürgeramt, Ausländerbehörde</small><i>›</i></button>
+          <button class="cat" data-category="Praca / Arbeitgeber"><span>▣</span><b>Praca / Arbeitgeber</b><small>np. umowa, zaświadczenia</small><i>›</i></button>
+          <button class="cat" data-category="Pieniądze"><span>€</span><b>Pieniądze</b><small>np. Finanzamt, Jobcenter, Kindergeld</small><i>›</i></button>
+          <button class="cat" data-category="Mieszkanie"><span>⌂</span><b>Mieszkanie</b><small>np. wynajem, wypowiedzenie</small><i>›</i></button>
+          <button class="cat" data-category="Zdrowie"><span>♥</span><b>Zdrowie</b><small>np. Krankenkasse</small><i>›</i></button>
+          <button class="cat" data-category="Samochód"><span>▰</span><b>Samochód</b><small>np. Führerschein, Zulassung</small><i>›</i></button>
+          <button class="cat" data-category="Odpowiedź na otrzymane pismo"><span>▤</span><b>Odpowiedź na otrzymane pismo</b><small>np. decyzja, wezwanie</small><i>›</i></button>
+          <button class="cat" data-category="Zupełnie inna sprawa"><span>•••</span><b>Zupełnie inna sprawa</b><small>Opisz po prostu, o co chodzi</small><i>›</i></button>
+        </div>
+      </section>
+
+      <section id="describe" class="view">
+        <header><button class="back" data-back>‹</button><div><small>KROK 2</small><h2>Opisz swoją sprawę</h2></div><button class="round-help">?</button></header>
+        <div class="describe-card">
+          <p>Napisz po polsku, co chcesz przekazać.<br>Możesz wpisać to własnymi słowami.</p>
+          <div class="mini-fields">
+            <input id="senderNameInput" type="text" placeholder="Twoje imię i nazwisko (opcjonalnie)">
+            <input id="recipientInput" type="text" placeholder="Odbiorca / urząd (opcjonalnie)">
+          </div>
+          <div class="textarea"><textarea id="caseText" maxlength="10000" placeholder="Np. Chcę napisać do Jobcenter, że od 1 października zaczynam nową pracę i proszę o wstrzymanie wypłaty Bürgergeld."></textarea><span id="counter">0/10000</span></div>
+          <button class="upload">▧ &nbsp; Dodaj plik <small>(np. zdjęcie pisma)</small></button>
+          <button class="cta full" id="generate">Dalej <span>→</span></button>
+        </div>
+      </section>
+
+      <section id="result" class="view">
+        <header><button class="back" data-back>‹</button><div><small>KROK 3</small><h2>Twoje pismo jest gotowe!</h2></div><button class="round-help">?</button></header>
+        <div class="template-editor" id="templateEditor">
+          <div class="editor-heading"><div><b>Dostosuj pismo do siebie</b><small>Uzupełnij dane i zmień treść przed wysłaniem.</small></div><span>EDYCJA</span></div>
+          <div class="editor-grid">
+            <label>Imię i nazwisko<input id="editSenderName" type="text" placeholder="Anna Kowalska"></label>
+            <label>Odbiorca / urząd<input id="editRecipient" type="text" placeholder="Jobcenter Goslar"></label>
+            <label>Ulica i numer<input id="editStreet" type="text" placeholder="Musterstraße 12"></label>
+            <label>PLZ i miejscowość<input id="editCity" type="text" placeholder="38640 Goslar"></label>
+            <label>Adres odbiorcy<input id="editRecipientAddress" type="text" placeholder="Musterstraße 1, 38640 Goslar"></label>
+            <label>Data<input id="editDate" type="date"></label>
+            <label class="editor-full">Temat<input id="editSubject" type="text" placeholder="Betreff"></label>
+            <label class="editor-full">Treść pisma<textarea id="editBody" rows="10" placeholder="Treść pisma..."></textarea></label>
+          </div>
+          <div class="editor-hint">Możesz zmienić każde pole. Podgląd poniżej aktualizuje się automatycznie.</div>
+        </div>
+        <div class="tabs"><button class="active">E-mail</button><button>List (DIN 5008)</button></div>
+        <div class="letter">
+          <div class="subject"><small>Temat</small><b id="subject">Anfrage</b><button type="button" id="focusEditor">✎</button></div>
+          <article id="letterText"></article>
+        </div>
+        <details class="translation"><summary>🇵🇱 &nbsp; Tłumaczenie na polski</summary><p id="translation">W kolejnej wersji tutaj pojawi się pełne tłumaczenie pisma.</p></details>
+        <div class="result-actions"><button id="copy">▣ &nbsp; Kopiuj</button><button id="copyPolish">PL &nbsp; Tłumaczenie</button><button id="saveText">⇩ &nbsp; Zapisz pismo</button></div>
+        <div class="ai-note" id="aiNote">BRIEFLA przygotowuje pismo na podstawie Twojego opisu. Wersja AI analizuje sens wypowiedzi, a nie tylko podmienia słowa.</div>
+      </section>
+
+      <section id="letters" class="view">
+        <header><button class="back" data-back>‹</button><div><h2>Moje pisma</h2><small>Twoje zapisane pisma</small></div><button class="round-help">?</button></header>
+        <div class="letters-toolbar"><p>Tu znajdziesz pisma, które wcześniej przygotowałeś i zapisałeś.</p><button class="secondary-action" id="goTemplates">＋ &nbsp; Utwórz z szablonu</button></div>
+        <div class="saved-letters" id="savedLetters"></div>
+      </section>
+
+      <section id="templates" class="view">
+        <header><button class="back" data-back>‹</button><div><h2>Szablony</h2><small>Gotowe pisma do edycji</small></div><button class="round-help">?</button></header>
+        <input class="search" id="templateSearch" type="search" placeholder="⌕  Szukaj szablonu..." aria-label="Szukaj szablonu">
+        <div class="template-section-label">Urzędy i sprawy urzędowe</div>
+        <div class="template-list template-grid" id="templateList">
+          <button data-template="address"><span>🏠</span><div><b>Zmiana adresu</b><small>Bürgeramt / urząd miasta</small></div><i>›</i></button>
+          <button data-template="registration"><span>📍</span><div><b>Anmeldung / meldunek</b><small>Zameldowanie w Niemczech</small></div><i>›</i></button>
+          <button data-template="deregistration"><span>↪</span><div><b>Abmeldung</b><small>Wymeldowanie</small></div><i>›</i></button>
+          <button data-template="auslander"><span>🪪</span><div><b>Ausländerbehörde</b><small>Termin, dokumenty, pobyt</small></div><i>›</i></button>
+          <button data-template="appointment"><span>🗓</span><div><b>Prośba o termin</b><small>Termin w urzędzie</small></div><i>›</i></button>
+          <button data-template="documents"><span>📄</span><div><b>Brakujące dokumenty</b><small>Dosłanie załączników</small></div><i>›</i></button>
+          <button data-template="appeal"><span>📝</span><div><b>Odwołanie od decyzji</b><small>Widerspruch</small></div><i>›</i></button>
+          <button data-template="requestDecision"><span>⚖</span><div><b>Prośba o ponowne rozpatrzenie</b><small>Sprawdzenie sprawy / decyzji</small></div><i>›</i></button>
+
+          <button data-template="jobcenter"><span>€</span><div><b>Jobcenter / Bürgergeld</b><small>Informacja o sytuacji</small></div><i>›</i></button>
+          <button data-template="newJob"><span>💼</span><div><b>Zgłoszenie nowej pracy</b><small>Nowe zatrudnienie</small></div><i>›</i></button>
+          <button data-template="incomeChange"><span>💶</span><div><b>Zmiana dochodu</b><small>Jobcenter / urząd</small></div><i>›</i></button>
+          <button data-template="familykasse"><span>👨‍👩‍👧</span><div><b>Familienkasse</b><small>Kindergeld i dokumenty</small></div><i>›</i></button>
+          <button data-template="kindergeld"><span>€</span><div><b>Wniosek o Kindergeld</b><small>Świadczenie na dziecko</small></div><i>›</i></button>
+          <button data-template="finanzamt"><span>🧾</span><div><b>Finanzamt</b><small>Podatki i zaświadczenia</small></div><i>›</i></button>
+          <button data-template="taxDocuments"><span>📑</span><div><b>Dosłanie dokumentów podatkowych</b><small>Finanzamt</small></div><i>›</i></button>
+
+          <button data-template="healthInsurance"><span>♥</span><div><b>Krankenkasse</b><small>Ubezpieczenie zdrowotne</small></div><i>›</i></button>
+          <button data-template="sick"><span>✚</span><div><b>Zgłoszenie choroby</b><small>Krankmeldung</small></div><i>›</i></button>
+          <button data-template="employer"><span>▣</span><div><b>Pracodawca / Arbeitgeber</b><small>Zaświadczenia i informacje</small></div><i>›</i></button>
+          <button data-template="absence"><span>▣</span><div><b>Wyjaśnienie nieobecności</b><small>Praca / urząd</small></div><i>›</i></button>
+
+          <button data-template="rentTermination"><span>🏠</span><div><b>Wypowiedzenie umowy najmu</b><small>Mieszkanie</small></div><i>›</i></button>
+          <button data-template="rentIssue"><span>🔑</span><div><b>Problem z mieszkaniem</b><small>Vermieter / Hausverwaltung</small></div><i>›</i></button>
+          <button data-template="carRegistration"><span>🚗</span><div><b>Zulassungsstelle</b><small>Rejestracja samochodu</small></div><i>›</i></button>
+          <button data-template="license"><span>🚘</span><div><b>Führerscheinstelle</b><small>Prawo jazdy</small></div><i>›</i></button>
+
+          <button data-template="pension"><span>▤</span><div><b>Deutsche Rentenversicherung</b><small>Emerytura i dokumenty</small></div><i>›</i></button>
+          <button data-template="contribution"><span>▤</span><div><b>Beitragsservice</b><small>Rundfunkbeitrag</small></div><i>›</i></button>
+          <button data-template="other"><span>＋</span><div><b>Inne szablony</b><small>Opisz własną sprawę</small></div><i>›</i></button>
+        </div>
+      </section>
+
+      <section id="profile" class="view">
+        <header><div><h2>Profil</h2></div><button class="round-help">⚙</button></header>
+        <div class="profile-card"><div><b>Plan: Darmowy</b><span>Pro</span></div><p>✓ &nbsp; 3 pisma miesięcznie</p><p>✓ &nbsp; Podstawowe szablony</p><p>✓ &nbsp; Tłumaczenie na polski</p><button class="cta full">♛ &nbsp; Przejdź na wersję Pro</button></div>
+        <div class="template-list"><button data-nav="letters">▤ &nbsp; Moje pisma <i>›</i></button><button>♡ &nbsp; Zapisane szablony <i>›</i></button><button>⚙ &nbsp; Ustawienia <i>›</i></button><button>? &nbsp; Pomoc / FAQ <i>›</i></button><button>✉ &nbsp; Kontakt <i>›</i></button><button>ⓘ &nbsp; O aplikacji <i>›</i></button></div>
+      </section>
+    </main>
+
+    <nav class="mobile-nav">
+      <button data-nav="home" class="active"><span>⌂</span>Start</button>
+      <button data-nav="categories"><span>◈</span>Kategorie</button>
+      <button data-nav="letters"><span>▤</span>Moje pisma</button>
+      <button data-nav="profile"><span>♙</span>Profil</button>
+    </nav>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
