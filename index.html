@@ -75,7 +75,10 @@
             <input id="recipientInput" type="text" placeholder="Odbiorca / urząd (opcjonalnie)" data-i18n-placeholder="recipientOptional">
           </div>
           <div class="textarea"><textarea id="caseText" maxlength="10000" placeholder="Np. Chcę napisać do Jobcenter, że od 1 października zaczynam nową pracę i proszę o wstrzymanie wypłaty Bürgergeld." data-i18n-placeholder="casePlaceholder"></textarea><span id="counter">0/10000</span></div>
-          <button class="upload" data-i18n="addFile">▧ &nbsp; Dodaj plik <small>(np. zdjęcie pisma)</small></button>
+          <input id="attachmentInput" type="file" accept="image/*,.pdf,application/pdf" hidden>
+          <button class="upload" id="uploadButton" type="button" data-i18n="addFile">▧ &nbsp; Dodaj plik <small>(np. zdjęcie pisma lub PDF)</small></button>
+          <div id="attachmentStatus" class="attachment-status" hidden></div>
+          <div id="attachmentPreview" class="attachment-preview" hidden></div>
           <button class="cta full" id="generate" data-i18n="next">Dalej <span>→</span></button>
         </div>
       </section>

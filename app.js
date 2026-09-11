@@ -211,8 +211,12 @@ function fillResult(subject, body, translation, recipient=""){
   show("result");
 }
 
-const BRIEFLA_AI_ENDPOINT = ""; // W przyszłości: bezpieczny backend BRIEFLA, nigdy klucz API w przeglądarce.
+const BRIEFLA_AI_ENDPOINT = ""; // Docelowo: bezpieczny backend BRIEFLA. Nigdy nie wkładamy klucza API do przeglądarki.
 let pendingAnalysis=null;
+let currentAttachment=null;
+let attachmentOcrText="";
+let tesseractPromise=null;
+let pdfjsPromise=null;
 
 function normalizeCaseText(text){
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
@@ -351,17 +355,144 @@ function buildSmartDraft(analysis, answers){
   return {subject:analysis.subject,body,translation,recipient:a.recipient||analysis.recipient};
 }
 
-function generate(){
-  const raw=(area?.value||"").trim();
-  if(!raw){
+async function loadScriptOnce(src, globalName){
+  if(globalName && window[globalName]) return window[globalName];
+  return new Promise((resolve,reject)=>{
+    const existing=[...document.scripts].find(x=>x.src===src);
+    if(existing){
+      existing.addEventListener("load",()=>resolve(globalName?window[globalName]:true),{once:true});
+      existing.addEventListener("error",reject,{once:true});
+      return;
+    }
+    const script=document.createElement("script");
+    script.src=src; script.async=true;
+    script.onload=()=>resolve(globalName?window[globalName]:true);
+    script.onerror=()=>reject(new Error("Nie udało się załadować modułu."));
+    document.head.appendChild(script);
+  });
+}
+
+async function getTesseract(){
+  if(!tesseractPromise){
+    tesseractPromise=loadScriptOnce("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js","Tesseract");
+  }
+  return tesseractPromise;
+}
+
+async function getPdfJs(){
+  if(!pdfjsPromise){
+    pdfjsPromise=loadScriptOnce("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","pdfjsLib").then(lib=>{
+      if(lib && lib.GlobalWorkerOptions) lib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      return lib;
+    });
+  }
+  return pdfjsPromise;
+}
+
+function setAttachmentStatus(message,type=""){
+  const el=$("attachmentStatus"); if(!el)return;
+  el.hidden=false; el.className=`attachment-status ${type}`; el.textContent=message;
+}
+
+function renderAttachmentPreview(file){
+  const box=$("attachmentPreview"); if(!box)return;
+  box.hidden=false;
+  if(file.type.startsWith("image/")){
+    const url=URL.createObjectURL(file);
+    box.innerHTML=`<img src="${url}" alt="Podgląd załącznika"><button type="button" class="attachment-remove" id="removeAttachment">Usuń plik</button>`;
+    const img=box.querySelector("img"); img.addEventListener("load",()=>URL.revokeObjectURL(url),{once:true});
+  }else{
+    box.innerHTML=`<div class="attachment-file"><span>PDF</span><span>${escapeHtml(file.name)}</span><button type="button" class="attachment-remove" id="removeAttachment">Usuń plik</button></div>`;
+  }
+  $("removeAttachment")?.addEventListener("click",clearAttachment);
+}
+
+function clearAttachment(){
+  currentAttachment=null; attachmentOcrText="";
+  const input=$("attachmentInput"); if(input)input.value="";
+  const box=$("attachmentPreview"); if(box){box.hidden=true;box.innerHTML="";}
+  const status=$("attachmentStatus"); if(status){status.hidden=true;status.textContent="";}
+}
+
+async function ocrImage(file){
+  const T=await getTesseract();
+  if(!T || !T.recognize) throw new Error("Moduł rozpoznawania tekstu jest niedostępny.");
+  const result=await T.recognize(file,"deu+pol+ukr",{logger:m=>{
+    if(m.status==="recognizing text" && Number.isFinite(m.progress)){
+      const pct=Math.round(m.progress*100);
+      setAttachmentStatus(`Odczytuję tekst ze zdjęcia… ${pct}%`,"processing");
+    }
+  }});
+  return (result?.data?.text||"").replace(/\s+/g," ").trim();
+}
+
+async function ocrPdf(file){
+  const pdfjs=await getPdfJs();
+  const buffer=await file.arrayBuffer();
+  const pdf=await pdfjs.getDocument({data:buffer}).promise;
+  const pages=Math.min(pdf.numPages,2);
+  let combined="";
+  for(let i=1;i<=pages;i++){
+    setAttachmentStatus(`Odczytuję stronę ${i} z ${pages}…`,"processing");
+    const page=await pdf.getPage(i);
+    const viewport=page.getViewport({scale:1.6});
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.ceil(viewport.width); canvas.height=Math.ceil(viewport.height);
+    await page.render({canvasContext:canvas.getContext("2d"),viewport}).promise;
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+    if(blob) combined += " " + await ocrImage(blob);
+    if(i===1){
+      const box=$("attachmentPreview");
+      if(box){const url=URL.createObjectURL(blob);box.innerHTML=`<img src="${url}" alt="Podgląd pierwszej strony PDF"><button type="button" class="attachment-remove" id="removeAttachment">Usuń plik</button>`;const img=box.querySelector("img");img.addEventListener("load",()=>URL.revokeObjectURL(url),{once:true});$("removeAttachment")?.addEventListener("click",clearAttachment);}
+    }
+  }
+  return combined.replace(/\s+/g," ").trim();
+}
+
+async function analyzeAttachment(file){
+  if(!file)return "";
+  const max=15*1024*1024;
+  if(file.size>max) throw new Error("Plik jest za duży. Maksymalny rozmiar to 15 MB.");
+  if(file.type.startsWith("image/")) return ocrImage(file);
+  if(file.type==="application/pdf" || file.name.toLowerCase().endsWith(".pdf")) return ocrPdf(file);
+  throw new Error("Obsługiwane są zdjęcia oraz pliki PDF.");
+}
+
+async function generate(){
+  let typed=(area?.value||"").trim();
+  let combined=typed;
+  if(currentAttachment){
+    try{
+      setAttachmentStatus("Analizuję załącznik…","processing");
+      attachmentOcrText=await analyzeAttachment(currentAttachment);
+      if(attachmentOcrText) combined=[typed,attachmentOcrText].filter(Boolean).join("\n\n");
+      setAttachmentStatus(attachmentOcrText?"Załącznik odczytany. BRIEFLA wykorzysta jego treść do rozpoznania sprawy.":"Nie udało się odczytać tekstu z załącznika.",attachmentOcrText?"success":"error");
+    }catch(err){
+      setAttachmentStatus(err?.message||"Nie udało się przeanalizować załącznika.","error");
+      return;
+    }
+  }
+  if(!combined){
     area?.focus();
     return;
   }
-  const analysis=analyzeCase(raw);
+  const analysis=analyzeCase(combined);
+  analysis.attachmentText=attachmentOcrText;
   if(analysis.questions.length){ renderSmartQuestions(analysis); return; }
   const draft=buildSmartDraft(analysis,{});
   if(draft) fillResult(draft.subject,draft.body,draft.translation,draft.recipient);
 }
+
+const attachmentInput=$("attachmentInput");
+const uploadButton=$("uploadButton");
+uploadButton?.addEventListener("click",()=>attachmentInput?.click());
+attachmentInput?.addEventListener("change",e=>{
+  const file=e.target.files?.[0];
+  if(!file)return;
+  currentAttachment=file; attachmentOcrText="";
+  renderAttachmentPreview(file);
+  setAttachmentStatus(`Wybrano: ${file.name}. Kliknij „Dalej”, aby BRIEFLA odczytała treść i pomogła rozpoznać sprawę.`);
+});
 
 
 /* BRIEFLA TEMPLATE FORMS 2.0 — every template asks for real data before drafting. */
