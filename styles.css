@@ -358,3 +358,80 @@
     white-space:nowrap !important;
   }
 }
+
+
+/* FINAL MOBILE FIX v3 */
+@media(max-width:849px){
+  /* Language switcher must always be visible on mobile. */
+  .top-controls{
+    display:flex !important;
+    position:fixed !important;
+    top:8px !important;
+    right:12px !important;
+    margin:0 !important;
+    z-index:9999 !important;
+  }
+  .top-controls>button{
+    display:block !important;
+    width:auto !important;
+    min-width:68px !important;
+    height:36px !important;
+    padding:6px 10px !important;
+    font-size:12px !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+    border:1px solid #dfe6ef !important;
+    background:#fff !important;
+    border-radius:18px !important;
+  }
+  .language-menu{
+    position:absolute !important;
+    top:43px !important;
+    right:0 !important;
+    min-width:145px !important;
+    z-index:10000 !important;
+  }
+
+  /* Compact mobile bottom navigation: icon + small one-line label. */
+  .mobile-nav{
+    height:68px !important;
+    grid-template-columns:repeat(4,1fr) !important;
+  }
+  .mobile-nav button{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:1px !important;
+    padding:4px 2px !important;
+    font-size:11px !important;
+    line-height:1 !important;
+    font-weight:700 !important;
+    white-space:nowrap !important;
+  }
+  .mobile-nav button > span:first-child{
+    display:block !important;
+    width:auto !important;
+    font-size:18px !important;
+    line-height:1 !important;
+    margin:0 !important;
+  }
+  .mobile-nav button > span:last-child{
+    display:block !important;
+    width:auto !important;
+    font-size:11px !important;
+    line-height:1.05 !important;
+    white-space:nowrap !important;
+    margin:0 !important;
+  }
+
+  /* Smaller category typography. */
+  .category-grid .cat b{
+    font-size:12px !important;
+    line-height:1.2 !important;
+  }
+  .category-grid .cat small{
+    font-size:9.5px !important;
+    line-height:1.2 !important;
+  }
+}
