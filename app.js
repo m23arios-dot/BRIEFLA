@@ -208,6 +208,7 @@ function fillResult(subject, body, translation, recipient=""){
   show("result");
 }
 
+const BRIEFLA_AI_ENDPOINT = ""; // W przyszłości: bezpieczny backend BRIEFLA, nigdy klucz API w przeglądarce.
 let pendingAnalysis=null;
 
 function normalizeCaseText(text){
@@ -256,7 +257,7 @@ function analyzeCase(raw){
     questions=[{id:"preferredDate",label:{pl:"Preferowany termin (opcjonalnie)",uk:"Бажана дата/час (необов’язково)"},placeholder:{pl:"np. 15.10.2026 po 14:00",uk:"напр. 15.10.2026 після 14:00"},required:false,type:"text"}];
   } else if(l.includes("brakuj")||l.includes("doslac")||l.includes("dosłać")||l.includes("unterlagen")||l.includes("dokument")){
     intent="documents"; recipient="Zuständige Stelle"; subject="Nachreichung von Unterlagen";
-    questions=[{id:"documentType",label:{pl:"Czego dotyczą dokumenty?",uk:"Чого стосуються документи?"},required:true,type:"select",options:[{value:"income",pl:"Dochód / wynagrodzenie",uk:"Дохід / заробітна плата"},{value:"identity",pl:"Dokument tożsamości",uk:"Документ, що посвідчує особу"},{value:"residence",pl:"Pobyt / dokument pobytowy",uk:"Проживання / документ на проживання"},{value:"tax",pl:"Podatki",uk:"Податки"},{value:"other",pl:"Inne dokumenty",uk:"Інші документи"}]}];
+    questions=[{id:"documents",label:{pl:"Jakie dokumenty dosyłasz?",uk:"Які документи ви надсилаєте?"},required:true,type:"select",options:[{value:"income",pl:"Dochód / wynagrodzenie",uk:"Дохід / заробітна плата"},{value:"identity",pl:"Dokument tożsamości",uk:"Документ, що посвідчує особу"},{value:"residence",pl:"Pobyt / dokument pobytowy",uk:"Проживання / документ на проживання"},{value:"tax",pl:"Podatki",uk:"Податки"},{value:"other",pl:"Inne dokumenty",uk:"Інші документи"}]}];
   } else if(l.includes("wypowied") && (l.includes("mieszkan")||l.includes("umow")||l.includes("najem")||l.includes("miet"))){
     intent="rentTermination"; recipient="Vermieter / Hausverwaltung"; subject="Kündigung des Mietvertrags";
     questions=[{id:"address",label:{pl:"Adres mieszkania",uk:"Адреса житла"},placeholder:{pl:"Ulica, numer, PLZ, miejscowość",uk:"Вулиця, номер, індекс, місто"},required:true,type:"text"},{id:"terminationDate",label:{pl:"Data zakończenia umowy (jeśli znasz)",uk:"Дата завершення договору (якщо відома)"},placeholder:{pl:"np. 31.12.2026",uk:"напр. 31.12.2026"},required:false,type:"text"}];
@@ -266,6 +267,14 @@ function analyzeCase(raw){
   } else if(l.includes("auslanderbehorde")||l.includes("pobyt")||l.includes("aufenthalt")){
     intent="residence"; recipient="Ausländerbehörde"; subject="Anfrage zu meinem Aufenthaltsstatus";
     questions=[{id:"purpose",label:{pl:"Czego dotyczy sprawa?",uk:"Чого стосується справа?"},required:true,type:"select",options:[{value:"appointment",pl:"Termin",uk:"Термін"},{value:"extension",pl:"Przedłużenie dokumentu pobytowego",uk:"Продовження документа на проживання"},{value:"documents",pl:"Wymagane dokumenty",uk:"Необхідні документи"},{value:"status",pl:"Informacja o statusie pobytu",uk:"Інформація про статус перебування"},{value:"other",pl:"Inna sprawa",uk:"Інша справа"}]}];
+  }
+  if(intent==="other"){
+    recipient=""; subject="Anfrage";
+    questions=[
+      {id:"recipient",label:{pl:"Do jakiego urzędu / osoby kierujesz pismo?",uk:"До якої установи / особи ви звертаєтесь?"},placeholder:{pl:"np. Finanzamt Goslar",uk:"напр. Finanzamt Goslar"},required:true,type:"text"},
+      {id:"purpose",label:{pl:"Jaki jest główny cel pisma?",uk:"Яка головна мета листа?"},placeholder:{pl:"np. chcę poinformować o zmianie danych",uk:"напр. хочу повідомити про зміну даних"},required:true,type:"text"},
+      {id:"action",label:{pl:"Czego oczekujesz od odbiorcy?",uk:"Чого ви очікуєте від одержувача?"},placeholder:{pl:"np. proszę o aktualizację danych i potwierdzenie",uk:"напр. прошу оновити дані та підтвердити"},required:true,type:"text"}
+    ];
   }
   return {intent,recipient,subject,questions,raw};
 }
@@ -328,12 +337,15 @@ function buildSmartDraft(analysis, answers){
     body=`ich wende mich an Sie bezüglich meines Aufenthaltsstatus.\n\nMein Anliegen: ${a.purpose}\n\nBitte teilen Sie mir mit, welche Unterlagen erforderlich sind und wie ich weiter vorgehen soll.\n\nVielen Dank für Ihre Rückmeldung.`;
     translation=`Zwracam się do Ausländerbehörde w sprawie mojego pobytu. Potrzebuję: ${a.purpose}. Proszę o informację, jakie dokumenty są wymagane i co powinienem zrobić dalej.`;
   } else if(intent==="jobcenterGeneral"){
-    body=`hiermit möchte ich Sie über folgende Änderung bzw. Angelegenheit informieren:\n\n${a.purpose}\n\nBitte teilen Sie mir mit, ob weitere Unterlagen oder Angaben benötigt werden.\n\nVielen Dank für Ihre Rückmeldung.`;
-    translation=`Informuję Jobcenter o następującej zmianie lub sprawie: ${a.purpose}. Proszę o informację, czy potrzebne są dodatkowe dokumenty lub dane.`;
+    body=`hiermit möchte ich Sie über folgende Angelegenheit informieren.\n\nIch bitte Sie um eine Prüfung meines Anliegens und um Mitteilung, welche weiteren Angaben oder Unterlagen Sie von mir benötigen.\n\nVielen Dank für Ihre Rückmeldung.`;
+    translation=`Informuję Jobcenter o mojej sprawie. Proszę o jej sprawdzenie i informację, jakie dodatkowe dane lub dokumenty są potrzebne.`;
+  } else if(intent==="other"){
+    body=`hiermit wende ich mich mit einem Anliegen an Sie.\n\nIch bitte Sie, mein Anliegen zu prüfen und die erforderlichen Schritte zu veranlassen.\n\nFalls Sie weitere Informationen oder Unterlagen benötigen, teilen Sie mir bitte mit, welche Angaben ich nachreichen soll.\n\nVielen Dank für Ihre Rückmeldung.`;
+    translation=`Zwracam się do Państwa w konkretnej sprawie. Proszę o jej rozpatrzenie i podjęcie niezbędnych działań. Jeśli potrzebne są dodatkowe informacje lub dokumenty, proszę o wskazanie, jakie dane mam dostarczyć.`;
   } else {
     return null;
   }
-  return {subject:analysis.subject,body,translation,recipient:analysis.recipient};
+  return {subject:analysis.subject,body,translation,recipient:a.recipient||analysis.recipient};
 }
 
 function generate(){
