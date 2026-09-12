@@ -938,3 +938,21 @@ applyLanguage=function(){previousApplyLanguage();updateCurrentTranslationLanguag
 /* Re-apply the language after opening a saved letter. */
 const previousOpenSavedLetter=openSavedLetter;
 openSavedLetter=function(id){previousOpenSavedLetter(id);updateCurrentTranslationLanguage();};
+
+
+/* Mobile bottom navigation uses shorter labels so all five destinations fit cleanly in one row. */
+function updateMobileNavLabels(){
+  const labels=language==="uk"
+    ? ["Головна","Категорії","Порадник","Листи","Профіль"]
+    : ["Start","Kategorie","Doradca","Pisma","Profil"];
+  document.querySelectorAll(".mobile-nav button").forEach((btn,i)=>{
+    const label=btn.querySelector("span:last-child");
+    if(label && labels[i]) label.textContent=labels[i];
+  });
+}
+const applyLanguageWithMobileNav=applyLanguage;
+applyLanguage=function(){
+  applyLanguageWithMobileNav();
+  updateMobileNavLabels();
+};
+updateMobileNavLabels();

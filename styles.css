@@ -396,7 +396,7 @@
   /* Compact mobile bottom navigation: icon + small one-line label. */
   .mobile-nav{
     height:68px !important;
-    grid-template-columns:repeat(4,1fr) !important;
+    grid-template-columns:repeat(5,minmax(0,1fr)) !important;
   }
   .mobile-nav button{
     display:flex !important;
@@ -545,3 +545,29 @@
 .advisor-composer{margin:0 18px 12px;border:1px solid #d8e1ec;border-radius:16px;background:#fff;box-shadow:0 4px 15px rgba(20,40,70,.04);padding:10px}.advisor-composer textarea{width:100%;border:0;outline:0;resize:none;min-height:74px;padding:5px 5px 9px;font-size:15px;color:#17263f;background:transparent}.advisor-composer-row{display:flex;align-items:center;gap:9px}.advisor-icon-btn{border:1px solid #dce5ef;background:#f7faff;width:40px;height:40px;border-radius:11px;cursor:pointer}.advisor-hint{font-size:11px;color:#8793a5;flex:1}.advisor-send{padding:10px 16px;border-radius:11px}.advisor-result-btn{display:block;margin:2px 0 14px;border:1px solid #cfe0f7;background:#edf5ff;color:#1768df;border-radius:11px;padding:10px 13px;font-weight:800;cursor:pointer}.advisor-note{text-align:center;font-size:11px;color:#8792a4;padding:0 16px 15px}
 @media(min-width:850px){.advisor-chat{min-height:680px}.advisor-messages{max-height:520px}.advisor-send{min-width:110px}}
 @media(max-width:849px){.advisor-chat{margin:0 0 80px;border-radius:17px;min-height:calc(100vh - 190px)}.advisor-welcome{padding:15px}.advisor-messages{padding:15px;min-height:280px;max-height:none}.advisor-bubble{max-width:88%;font-size:13px}.advisor-composer{margin:0 10px 9px}.advisor-hint{display:none}.advisor-send{min-width:92px}.advisor-note{padding-bottom:8px}}
+
+
+/* FINAL MOBILE NAV v13 — five items, one compact row */
+@media(max-width:849px){
+  .mobile-nav{
+    display:grid !important;
+    grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+    width:100% !important;
+    min-width:0 !important;
+    overflow:hidden !important;
+  }
+  .mobile-nav button{
+    min-width:0 !important;
+    width:100% !important;
+    overflow:hidden !important;
+    padding:3px 0 !important;
+  }
+  .mobile-nav button > span:last-child{
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:clip !important;
+    white-space:nowrap !important;
+    font-size:9px !important;
+    line-height:1 !important;
+  }
+}
