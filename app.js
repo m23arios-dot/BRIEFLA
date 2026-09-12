@@ -940,7 +940,7 @@ const previousOpenSavedLetter=openSavedLetter;
 openSavedLetter=function(id){previousOpenSavedLetter(id);updateCurrentTranslationLanguage();};
 
 
-/* Mobile bottom navigation uses shorter labels so all five destinations fit cleanly in one row. */
+/* Mobile bottom navigation keeps all five destinations in one row. */
 function updateMobileNavLabels(){
   const labels=language==="uk"
     ? ["Головна","Категорії","Порадник","Листи","Профіль"]

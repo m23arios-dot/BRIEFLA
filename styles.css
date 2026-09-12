@@ -698,58 +698,184 @@
 }
 @media (max-width:360px){.mobile-nav > button > span:last-child{font-size:8px!important}}
 
-
-/* V16: compact top advisor control for mobile/PWA. The advisor stays in one row with the language selector. */
-@media (max-width:849px){
-  .top-controls{gap:6px!important;align-items:center!important;}
-  .mobile-top-advisor{
-    flex:0 0 auto!important;
-    width:auto!important;
-    min-width:0!important;
-    max-width:150px!important;
-    height:34px!important;
-    padding:0 9px!important;
-    gap:4px!important;
-    border-radius:17px!important;
-    font-size:10px!important;
-    line-height:1!important;
-    white-space:nowrap!important;
-    overflow:hidden!important;
-    box-sizing:border-box!important;
+/* BRIEFLA V15 — FINAL MOBILE/PWA NAVIGATION
+   Keep the top advisor control and all five bottom destinations in one horizontal row.
+   These rules are intentionally last so they win over earlier mobile overrides. */
+@media screen and (max-width:849px){
+  .top-controls{
+    position:fixed !important;
+    top:10px !important;
+    left:14px !important;
+    right:14px !important;
+    width:auto !important;
+    height:42px !important;
+    margin:0 !important;
+    padding:0 !important;
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    gap:8px !important;
+    z-index:100000 !important;
+    pointer-events:none !important;
   }
-  .mobile-top-advisor > span:first-child{
-    display:inline-flex!important;
-    flex:0 0 auto!important;
-    width:13px!important;
-    height:13px!important;
-    align-items:center!important;
-    justify-content:center!important;
-    font-size:11px!important;
-    line-height:1!important;
+  .top-controls .mobile-top-advisor{
+    display:inline-flex !important;
+    flex:0 0 auto !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:6px !important;
+    width:auto !important;
+    max-width:none !important;
+    min-width:0 !important;
+    height:40px !important;
+    margin:0 !important;
+    padding:0 13px !important;
+    box-sizing:border-box !important;
+    border:1px solid #dfe6ef !important;
+    border-radius:20px !important;
+    background:#fff !important;
+    color:#1768df !important;
+    font-size:12px !important;
+    line-height:1 !important;
+    font-weight:800 !important;
+    white-space:nowrap !important;
+    overflow:visible !important;
   }
-  .mobile-top-advisor > span:last-child{
-    display:block!important;
-    flex:0 1 auto!important;
-    width:auto!important;
-    min-width:0!important;
-    max-width:112px!important;
-    font-size:10px!important;
-    line-height:1!important;
-    white-space:nowrap!important;
-    overflow:hidden!important;
-    text-overflow:clip!important;
+  .top-controls .mobile-top-advisor > span{
+    display:inline-block !important;
+    position:static !important;
+    width:auto !important;
+    height:auto !important;
+    margin:0 !important;
+    padding:0 !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+  }
+  .top-controls .mobile-top-advisor > span:first-child{
+    flex:0 0 auto !important;
+    font-size:14px !important;
+  }
+  .top-controls .mobile-top-advisor > span:last-child{
+    flex:0 0 auto !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    font-size:12px !important;
   }
   .top-controls > #languageToggle{
-    flex:0 0 auto!important;
-    min-width:68px!important;
-    height:34px!important;
-    padding:0 9px!important;
-    font-size:12px!important;
-    border-radius:17px!important;
+    display:inline-flex !important;
+    flex:0 0 auto !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:auto !important;
+    min-width:70px !important;
+    height:40px !important;
+    margin:0 !important;
+    padding:0 11px !important;
+    box-sizing:border-box !important;
+    border:1px solid #dfe6ef !important;
+    border-radius:20px !important;
+    background:#fff !important;
+    color:#24334c !important;
+    font-size:12px !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+  }
+
+  .mobile-nav{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    top:auto !important;
+    display:grid !important;
+    grid-template-columns:repeat(5, minmax(0, 1fr)) !important;
+    grid-template-rows:68px !important;
+    align-items:stretch !important;
+    width:100% !important;
+    min-width:0 !important;
+    height:calc(68px + env(safe-area-inset-bottom)) !important;
+    min-height:calc(68px + env(safe-area-inset-bottom)) !important;
+    padding:0 0 env(safe-area-inset-bottom) 0 !important;
+    margin:0 !important;
+    box-sizing:border-box !important;
+    background:rgba(255,255,255,.98) !important;
+    border-top:1px solid #e1e7ef !important;
+    overflow:visible !important;
+    z-index:100000 !important;
+  }
+  .mobile-nav button,
+  .mobile-nav button[data-advisor="true"]{
+    display:flex !important;
+    position:relative !important;
+    align-self:stretch !important;
+    justify-self:stretch !important;
+    flex:none !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+    height:68px !important;
+    margin:0 !important;
+    padding:4px 1px 3px !important;
+    box-sizing:border-box !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:2px !important;
+    border:0 !important;
+    background:transparent !important;
+    overflow:hidden !important;
+    white-space:nowrap !important;
+    font-size:9px !important;
+    line-height:1 !important;
+    font-weight:750 !important;
+  }
+  .mobile-nav button > span:first-child{
+    display:block !important;
+    flex:0 0 auto !important;
+    width:auto !important;
+    max-width:none !important;
+    height:auto !important;
+    margin:0 !important;
+    padding:0 !important;
+    font-size:18px !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+  }
+  .mobile-nav button > span:last-child{
+    display:block !important;
+    flex:0 0 auto !important;
+    width:auto !important;
+    max-width:100% !important;
+    height:auto !important;
+    margin:0 !important;
+    padding:0 !important;
+    font-size:9px !important;
+    line-height:1.05 !important;
+    letter-spacing:-.15px !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:clip !important;
+  }
+  .mobile-nav button[data-advisor="true"],
+  .mobile-nav button[data-advisor="true"] > span{
+    color:#1768df !important;
+  }
+  .mobile-nav button.active,
+  .mobile-nav button.active > span{
+    color:#1768df !important;
+  }
+  .main{
+    padding-bottom:calc(86px + env(safe-area-inset-bottom)) !important;
   }
 }
-@media (max-width:360px){
-  .mobile-top-advisor{max-width:142px!important;font-size:9px!important;padding:0 8px!important;}
-  .mobile-top-advisor > span:first-child{width:12px!important;height:12px!important;font-size:10px!important;}
-  .mobile-top-advisor > span:last-child{max-width:105px!important;font-size:9px!important;}
+
+@media screen and (max-width:360px){
+  .top-controls{left:8px !important;right:8px !important;gap:5px !important}
+  .top-controls .mobile-top-advisor{padding:0 9px !important;font-size:11px !important}
+  .top-controls .mobile-top-advisor > span:last-child{font-size:11px !important}
+  .top-controls > #languageToggle{min-width:66px !important;padding:0 8px !important}
+  .mobile-nav button > span:first-child{font-size:17px !important}
+  .mobile-nav button > span:last-child{font-size:8px !important;letter-spacing:-.2px !important}
 }
