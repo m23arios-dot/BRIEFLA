@@ -53,7 +53,8 @@
       </section>
 
       <section id="categories" class="view">
-        <header><button class="back" data-back>‹</button><div><small data-i18n="step1">KROK 1</small><h2 data-i18n="chooseCategory">Wybierz kategorię</h2></div><button class="round-help">?</button></header>
+        <header><button class="back" data-back aria-label="Wróć">‹</button><div><small data-i18n="step1">KROK 1</small><h2 data-i18n="chooseCategory">Wybierz kategorię</h2></div><button class="round-help">?</button></header>
+        <button class="home-link" data-home type="button"><span>⌂</span><span data-i18n="backToMenu">Menu główne</span></button>
         <div class="category-grid">
           <button class="cat" data-category="Urząd / Amt"><span>🏛</span><b data-i18n="cat_office">Urząd / Amt</b><small data-i18n="catOfficeDesc">np. Bürgeramt, Ausländerbehörde</small><i>›</i></button>
           <button class="cat" data-category="Praca / Arbeitgeber"><span>▣</span><b data-i18n="cat_work">Praca / Arbeitgeber</b><small data-i18n="catWorkDesc">np. umowa, zaświadczenia</small><i>›</i></button>
@@ -68,6 +69,7 @@
 
       <section id="describe" class="view">
         <header><button class="back" data-back>‹</button><div><small data-i18n="step2">KROK 2</small><h2 data-i18n="describeCase">Opisz swoją sprawę</h2></div><button class="round-help">?</button></header>
+        <button class="home-link" data-home type="button"><span>⌂</span><span data-i18n="backToMenu">Menu główne</span></button>
         <div class="describe-card">
           <p><span data-i18n="describeIntro">Napisz po polsku, co chcesz przekazać.<br>Możesz wpisać to własnymi słowami.</span></p>
           <div class="mini-fields">
@@ -85,6 +87,7 @@
 
       <section id="smartQuestions" class="view">
         <header><button class="back" data-back>‹</button><div><small data-i18n="smartStep">KROK 2A</small><h2 data-i18n="smartTitle">Doprecyzuj swoją sprawę</h2></div><button class="round-help">?</button></header>
+        <button class="home-link" data-home type="button"><span>⌂</span><span data-i18n="backToMenu">Menu główne</span></button>
         <div class="smart-card">
           <div class="smart-badge">BRIEFLA</div>
           <div id="smartNotice" class="smart-notice" hidden></div>
@@ -98,16 +101,20 @@
 
       <section id="result" class="view">
         <header><button class="back" data-back>‹</button><div><small data-i18n="step3">KROK 3</small><h2 data-i18n="letterReady">Twoje pismo jest gotowe!</h2></div><button class="round-help">?</button></header>
+        <button class="home-link" data-home type="button"><span>⌂</span><span data-i18n="backToMenu">Menu główne</span></button>
         <div class="template-editor" id="templateEditor">
           <div class="editor-heading"><div><b data-i18n="editorTitle">Dostosuj pismo do siebie</b><small data-i18n="editorSub">Uzupełnij dane i zmień treść przed wysłaniem.</small></div><span data-i18n="editing">EDYCJA</span></div>
           <div class="editor-grid">
-            <div class="form-section-title editor-full"><b>Twoje dane</b><small>Te dane pojawią się jako nadawca na dokumencie.</small></div>
-            <label><span data-i18n="senderName">Imię i nazwisko</span><input id="editSenderName" type="text" placeholder="Anna Kowalska"></label>
+            <div class="form-section-title editor-full"><b>Twoje dane — nadawca</b><small>Najpierw wpisz swoje dane. Pojawią się na dokumencie jako nadawca.</small></div>
+            <label><span data-i18n="senderName">Imię i nazwisko</span><input id="editSenderName" type="text" placeholder="Mariusz Machowski"></label>
             <label><span data-i18n="street">Ulica i numer</span><input id="editStreet" type="text" placeholder="Musterstraße 12"></label>
-            <label><span data-i18n="city">PLZ i miejscowość</span><input id="editCity" type="text" placeholder="38640 Goslar"></label>
-            <div class="form-section-title editor-full recipient-section-title"><b>Odbiorca</b><small>Urząd lub osoba, do której wysyłasz pismo.</small></div>
-            <label><span data-i18n="recipient">Odbiorca / urząd</span><input id="editRecipient" type="text" placeholder="Jobcenter Goslar"></label>
-            <label><span data-i18n="recipientAddress">Adres odbiorcy</span><input id="editRecipientAddress" type="text" placeholder="Musterstraße 1, 38640 Goslar"></label>
+            <label><span data-i18n="city">Kod pocztowy i miejscowość</span><input id="editCity" type="text" placeholder="38640 Goslar"></label>
+
+            <div class="form-section-title editor-full recipient-section-title"><b>Dane urzędu / odbiorcy</b><small>Podaj urząd oraz jego pełny adres.</small></div>
+            <label><span data-i18n="recipient">Urząd / odbiorca</span><input id="editRecipient" type="text" placeholder="Jobcenter Goslar"></label>
+            <label><span>Ulica i numer urzędu</span><input id="editRecipientStreet" type="text" placeholder="Musterstraße 1"></label>
+            <label><span>Kod pocztowy i miejscowość urzędu</span><input id="editRecipientCity" type="text" placeholder="38640 Goslar"></label>
+
             <label><span data-i18n="date">Data</span><input id="editDate" type="date"></label>
             <label class="editor-full"><span data-i18n="subjectLabel">Temat</span><input id="editSubject" type="text" placeholder="Betreff"></label>
             <label class="editor-full"><span data-i18n="bodyLabel">Treść pisma</span><textarea id="editBody" rows="10" placeholder="Treść pisma..."></textarea></label>
@@ -137,12 +144,14 @@
 
       <section id="letters" class="view">
         <header><button class="back" data-back>‹</button><div><h2 data-i18n="navLetters">Moje pisma</h2><small data-i18n="savedLettersSub">Twoje zapisane pisma</small></div><button class="round-help">?</button></header>
+        <button class="home-link" data-home type="button"><span>⌂</span><span data-i18n="backToMenu">Menu główne</span></button>
         <div class="letters-toolbar"><p data-i18n="lettersIntro">Tu znajdziesz pisma, które wcześniej przygotowałeś i zapisałeś.</p><button class="secondary-action" id="goTemplates" data-i18n="createFromTemplate">＋ &nbsp; Utwórz z szablonu</button></div>
         <div class="saved-letters" id="savedLetters"></div>
       </section>
 
       <section id="templates" class="view">
         <header><button class="back" data-back>‹</button><div><h2 data-i18n="navTemplates">Szablony</h2><small data-i18n="templatesSub">Gotowe pisma do edycji</small></div><button class="round-help">?</button></header>
+        <button class="home-link" data-home type="button"><span>⌂</span><span data-i18n="backToMenu">Menu główne</span></button>
         <input class="search" id="templateSearch" type="search" placeholder="⌕  Szukaj szablonu..." aria-label="Szukaj szablonu" data-i18n-placeholder="searchTemplate">
         <div class="template-section-label" data-i18n="sectionOffices">Urzędy i sprawy urzędowe</div>
         <div class="template-list template-grid" id="templateList">

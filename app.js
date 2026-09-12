@@ -15,6 +15,7 @@ function show(id,push=true){
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.go)));
 document.querySelectorAll("[data-back]").forEach(b=>b.addEventListener("click",()=>show(stack.pop()||"home",false)));
 document.querySelectorAll("[data-nav]").forEach(b=>b.addEventListener("click",()=>{stack=[];show(b.dataset.nav,false)}));
+document.querySelectorAll("[data-home]").forEach(b=>b.addEventListener("click",()=>{stack=[];show("home",false)}));
 document.querySelectorAll(".cat").forEach(b=>b.addEventListener("click",()=>{category=b.dataset.category; show("describe")}));
 
 const area=$("caseText"), counter=$("counter");
@@ -124,7 +125,7 @@ function openSavedLetter(id){
   const item=getSavedLetters().find(x=>x.id===id);
   if(!item)return;
   currentLetterId=item.id;
-  prepareEditor(item.subject,item.body,item.senderName,item.recipient,item.recipientAddress,{street:item.street,city:item.city,date:item.date});
+  prepareEditor(item.subject,item.body,item.senderName,item.recipient,item.recipientAddress,{street:item.street,city:item.city,recipientStreet:item.recipientStreet,recipientCity:item.recipientCity,date:item.date});
   if($("translation")) $("translation").textContent=item.translation||"";
   show("result");
 }
@@ -177,11 +178,13 @@ function updateTemplatePreview(){
   const street=$("editStreet")?.value.trim();
   const city=$("editCity")?.value.trim();
   const recipientAddress=$("editRecipientAddress")?.value.trim();
+  const recipientStreet=$("editRecipientStreet")?.value.trim();
+  const recipientCity=$("editRecipientCity")?.value.trim();
   const subject=$("editSubject")?.value.trim()||"Anfrage";
   const body=$("editBody")?.value||"";
   const date=$("editDate")?.value;
   const address=[street,city].filter(Boolean).join("\n");
-  const recipientBlock=[recipient,recipientAddress].filter(Boolean).join("\n");
+  const recipientBlock=[recipient,recipientStreet,recipientCity].filter(Boolean).join("\n");
   const closing=`Mit freundlichen Grüßen\n\n${name}`;
   const full=[recipientBlock,address,body.trim(),closing].filter(Boolean).join("\n\n");
   if($("subject")) $("subject").textContent=subject;
@@ -197,6 +200,14 @@ function prepareEditor(subject, body, sender="", recipient="", recipientAddress=
   if($("editBody")) $("editBody").value=body||"";
   if($("editSenderName")) $("editSenderName").value=sender||$("senderNameInput")?.value.trim()||"";
   if($("editRecipient")) $("editRecipient").value=recipient||$("recipientInput")?.value.trim()||"";
+  if($("editRecipientStreet")) $("editRecipientStreet").value=savedFields?.recipientStreet||"";
+  if($("editRecipientCity")) $("editRecipientCity").value=savedFields?.recipientCity||"";
+  // Kompatybilność ze starszymi zapisanymi pismami: pojedynczy adres odbiorcy zostaje pokazany w polu ulicy/adresu.
+  if($("editRecipientStreet") && !$("editRecipientStreet").value && recipientAddress){
+    const parts=recipientAddress.split(/\s*,\s*/);
+    $("editRecipientStreet").value=parts[0]||"";
+    if($("editRecipientCity")) $("editRecipientCity").value=parts.slice(1).join(", ")||"";
+  }
   if($("editRecipientAddress")) $("editRecipientAddress").value=recipientAddress||"";
   if($("editStreet")) $("editStreet").value=savedFields?.street||"";
   if($("editCity")) $("editCity").value=savedFields?.city||"";
@@ -723,7 +734,7 @@ let language="pl";
 
 const uiText={
   pl:{
-    navStart:"Start",navCategories:"Kategorie",navLetters:"Moje pisma",navTemplates:"Szablony",navProfile:"Profil",settings:"Ustawienia",help:"Pomoc / FAQ",
+    navStart:"Start",navCategories:"Kategorie",navLetters:"Moje pisma",navTemplates:"Szablony",navProfile:"Profil",backToMenu:"Menu główne",settings:"Ustawienia",help:"Pomoc / FAQ",
     heroTitle:"Twoje pisma po niemiecku.<br>Prosto. Szybko. Bez stresu.",benefit1:"E-maile i listy do urzędów",benefit2:"Gotowe szablony",benefit3:"Tłumaczenia i wyjaśnienia",benefit4:"Krok po kroku",startNow:"Zacznij teraz <span>→</span>",
     feature1Title:"Wybierz kategorię",feature1Text:"Znajdź odpowiedni temat Twojej sprawy.",feature2Title:"Opisz swoją sprawę",feature2Text:"Napisz po polsku, co chcesz przekazać.",feature3Title:"Otrzymaj gotowe pismo",feature3Text:"Pobierz, skopiuj lub wyślij bezpośrednio.",
     smartStep:"KROK 2A",smartTitle:"Doprecyzuj swoją sprawę",smartIntroTitle:"Potrzebuję jeszcze kilku informacji",smartIntroText:"Dzięki temu pismo będzie konkretne i nie będziemy dopisywać informacji, których nie podałeś.",smartContinue:"Przygotuj pismo <span>→</span>",smartSecurity:"Wpisuj tylko dane potrzebne do tej sprawy. Przed wysłaniem zawsze możesz wszystko sprawdzić i poprawić.",step1:"KROK 1",chooseCategory:"Wybierz kategorię",step2:"KROK 2",describeCase:"Opisz swoją sprawę",step3:"KROK 3",letterReady:"Twoje pismo jest gotowe!",
@@ -737,7 +748,7 @@ const uiText={
     translationSummary:"🇵🇱 &nbsp; Tłumaczenie na polski",savedEmpty:"<b>Nie masz jeszcze zapisanych pism.</b><br>Przygotuj pismo, kliknij „Zapisz pismo” i znajdziesz je tutaj.",open:"Otwórz",remove:"Usuń",copied:"✓  Skopiowano",saved:"✓  Zapisano",copyError:"Nie udało się skopiować tekstu.",genericTranslation:"Przedstawiam swoje Anliegen po niemiecku w jasnej, formalnej formie. Treść została przygotowana na podstawie Twojego opisu."
   },
   uk:{
-    navStart:"Головна",navCategories:"Категорії",navLetters:"Мої листи",navTemplates:"Шаблони",navProfile:"Профіль",settings:"Налаштування",help:"Допомога / FAQ",
+    navStart:"Головна",navCategories:"Категорії",navLetters:"Мої листи",navTemplates:"Шаблони",navProfile:"Профіль",backToMenu:"Головне меню",settings:"Налаштування",help:"Допомога / FAQ",
     heroTitle:"Ваші листи німецькою.<br>Просто. Швидко. Без стресу.",benefit1:"Електронні листи та листи до установ",benefit2:"Готові шаблони",benefit3:"Переклади та пояснення",benefit4:"Крок за кроком",startNow:"Почати зараз <span>→</span>",
     feature1Title:"Оберіть категорію",feature1Text:"Знайдіть відповідну тему вашої справи.",feature2Title:"Опишіть свою справу",feature2Text:"Напишіть українською, що ви хочете повідомити.",feature3Title:"Отримайте готовий лист",feature3Text:"Завантажте, скопіюйте або надішліть його.",
     smartStep:"КРОК 2A",smartTitle:"Уточніть вашу справу",smartIntroTitle:"Потрібно ще кілька відомостей",smartIntroText:"Так лист буде конкретним, і ми не будемо додавати інформацію, якої ви не надавали.",smartContinue:"Підготувати лист <span>→</span>",smartSecurity:"Вводьте лише дані, потрібні для цієї справи. Перед надсиланням ви завжди можете все перевірити та виправити.",step1:"КРОК 1",chooseCategory:"Оберіть категорію",step2:"КРОК 2",describeCase:"Опишіть свою справу",step3:"КРОК 3",letterReady:"Ваш лист готовий!",

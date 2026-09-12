@@ -524,3 +524,9 @@
 .form-section-title small{font-size:10px;color:#748197}
 .recipient-section-title{margin-top:4px}
 .document-a4 .doc-sender{white-space:pre-line}
+
+/* Persistent return-to-main-menu control on every inner page. */
+.home-link{display:flex;align-items:center;gap:8px;width:max-content;border:1px solid #dce6f2;background:#fff;color:#1768df;border-radius:12px;padding:9px 13px;margin:-10px 0 18px;font-size:12px;font-weight:750;cursor:pointer;box-shadow:0 3px 10px rgba(20,40,70,.04)}
+.home-link span:first-child{font-size:17px;line-height:1}.home-link:hover{background:#f5f9ff;border-color:#cbdcf1}
+@media(min-width:850px){.home-link{margin:-10px 0 20px;font-size:12px}}
+@media(max-width:849px){.home-link{width:100%;justify-content:center;margin:-6px 0 18px;padding:11px 14px;border-radius:13px;font-size:12px}.home-link span:first-child{font-size:18px}}
