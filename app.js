@@ -16,6 +16,7 @@ document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=
 document.querySelectorAll("[data-back]").forEach(b=>b.addEventListener("click",()=>show(stack.pop()||"home",false)));
 document.querySelectorAll("[data-nav]").forEach(b=>b.addEventListener("click",()=>{stack=[];show(b.dataset.nav,false)}));
 document.querySelectorAll("[data-home]").forEach(b=>b.addEventListener("click",()=>{stack=[];show("home",false)}));
+document.querySelectorAll("[data-advisor]").forEach(b=>b.addEventListener("click",()=>{stack=[];show("advisor",false);initAdvisorChat();}));
 document.querySelectorAll(".cat").forEach(b=>b.addEventListener("click",()=>{category=b.dataset.category; show("describe")}));
 
 const area=$("caseText"), counter=$("counter");
@@ -307,10 +308,12 @@ function renderSmartQuestions(analysis){
 
   const isTemplate=!!analysis.templateKey;
   const common=isTemplate ? [
-    {id:"senderName",label:{pl:"Imię i nazwisko",uk:"Ім’я та прізвище"},placeholder:{pl:"np. Jan Kowalski",uk:"напр. Ян Ковальський"},required:true,type:"text"},
-    {id:"senderStreet",label:{pl:"Ulica i numer",uk:"Вулиця та номер"},placeholder:{pl:"np. Musterstraße 12",uk:"напр. Musterstraße 12"},required:true,type:"text"},
-    {id:"senderCity",label:{pl:"PLZ i miejscowość",uk:"Індекс і місто"},placeholder:{pl:"np. 38640 Goslar",uk:"напр. 38640 Goslar"},required:true,type:"text"},
-    {id:"recipientAddress",label:{pl:"Adres odbiorcy",uk:"Адреса одержувача"},placeholder:{pl:"np. Musterstraße 1, 38640 Goslar",uk:"напр. Musterstraße 1, 38640 Goslar"},required:false,type:"text"},
+    {id:"senderName",label:{pl:"Twoje dane — imię i nazwisko",uk:"Ваші дані — ім’я та прізвище"},placeholder:{pl:"np. Mariusz Machowski",uk:"напр. Маріуш Маховський"},required:true,type:"text"},
+    {id:"senderStreet",label:{pl:"Twój adres — ulica i numer",uk:"Ваша адреса — вулиця та номер"},placeholder:{pl:"np. Musterstraße 12",uk:"напр. Musterstraße 12"},required:true,type:"text"},
+    {id:"senderCity",label:{pl:"Twój adres — kod pocztowy i miejscowość",uk:"Ваша адреса — індекс і місто"},placeholder:{pl:"np. 38640 Goslar",uk:"напр. 38640 Goslar"},required:true,type:"text"},
+    {id:"recipient",label:{pl:"Odbiorca — urząd / osoba",uk:"Одержувач — установа / особа"},placeholder:{pl:"np. Jobcenter Goslar",uk:"напр. Jobcenter Goslar"},prefill:analysis.recipient||"",required:true,type:"text"},
+    {id:"recipientStreet",label:{pl:"Adres odbiorcy — ulica i numer",uk:"Адреса одержувача — вулиця та номер"},placeholder:{pl:"np. Musterstraße 1",uk:"напр. Musterstraße 1"},required:true,type:"text"},
+    {id:"recipientCity",label:{pl:"Adres odbiorcy — kod pocztowy i miejscowość",uk:"Адреса одержувача — індекс і місто"},placeholder:{pl:"np. 38640 Goslar",uk:"напр. 38640 Goslar"},required:true,type:"text"},
     {id:"letterDate",label:{pl:"Data pisma",uk:"Дата листа"},required:true,type:"date",prefill:formatDateForInput()}
   ] : [];
   const qs=[...common,...(analysis.questions||[])];
@@ -333,9 +336,10 @@ function renderSmartQuestions(analysis){
     const street=answers.senderStreet||"[Ulica i numer]";
     const city=answers.senderCity||"[PLZ i miejscowość]";
     const rec=answers.recipient||analysis.recipient||"[Odbiorca]";
-    const recAddr=answers.recipientAddress||"[Adres odbiorcy]";
+    const recStreet=answers.recipientStreet||"[Ulica i numer odbiorcy]";
+    const recCity=answers.recipientCity||"[PLZ i miejscowość odbiorcy]";
     const date=answers.letterDate||formatDateForInput();
-    const text=[`${rec}\n${recAddr}`,`${street}\n${city}`,`Datum: ${formatDateForLetter(date)}`,`Betreff: ${draft.subject||analysis.subject||""}`,draft.body||"",`Mit freundlichen Grüßen\n\n${sender}`].join("\n\n");
+    const text=[`${sender}\n${street}\n${city}`,`${rec}\n${recStreet}\n${recCity}`,`Datum: ${formatDateForLetter(date)}`,`Betreff: ${draft.subject||analysis.subject||""}`,draft.body||"",`Mit freundlichen Grüßen\n\n${sender}`].join("\n\n");
     const paper=$("templateLivePaper"); if(paper) paper.textContent=text;
   };
   list.querySelectorAll("input,select,textarea").forEach(el=>el.addEventListener("input",updateLive));
@@ -346,7 +350,7 @@ function renderSmartQuestions(analysis){
 
 function collectSmartAnswers(){
   const answers={};
-  const commonIds=pendingAnalysis?.templateKey?["senderName","senderStreet","senderCity","recipientAddress","letterDate"]:[];
+  const commonIds=pendingAnalysis?.templateKey?["senderName","senderStreet","senderCity","recipient","recipientStreet","recipientCity","letterDate"]:[];
   for(const id of commonIds){
     const el=$("smart_"+id); answers[id]=(el?.value||"").trim();
     if(id!=="recipientAddress" && !answers[id]){el?.focus();return null;}
@@ -682,7 +686,7 @@ if(oldSmartContinue){
       const draft=buildTemplateDraft(pendingAnalysis.templateKey,answers);
       if(draft){
         fillResult(draft.subject,draft.body,draft.translation,answers.recipient||draft.recipient||pendingAnalysis.recipient);
-        prepareEditor(draft.subject,draft.body,answers.senderName||"",answers.recipient||draft.recipient||pendingAnalysis.recipient,answers.recipientAddress||"",{street:answers.senderStreet||"",city:answers.senderCity||"",date:answers.letterDate||formatDateForInput()});
+        prepareEditor(draft.subject,draft.body,answers.senderName||"",answers.recipient||draft.recipient||pendingAnalysis.recipient,"",{street:answers.senderStreet||"",city:answers.senderCity||"",recipientStreet:answers.recipientStreet||"",recipientCity:answers.recipientCity||"",date:answers.letterDate||formatDateForInput()});
       }
       return;
     }
@@ -728,15 +732,95 @@ $("goTemplates")?.addEventListener("click",()=>show("templates"));
 
 renderSavedLetters();
 
+
+/* BRIEFLA Advisor — conversational assistant. Uses the secure Vercel backend when configured. */
+let advisorHistory=[];
+let advisorAttachment=null;
+let advisorAttachmentOcr="";
+let advisorOcrPromise=null;
+
+function advisorEndpoint(){
+  return window.BRIEFLA_API_URL || BRIEFLA_AI_ENDPOINT || "";
+}
+function advisorAddMessage(role,text){
+  const box=$("advisorMessages"); if(!box)return;
+  const row=document.createElement("div"); row.className=`advisor-msg ${role}`;
+  const bubble=document.createElement("div"); bubble.className="advisor-bubble"; bubble.textContent=text;
+  row.appendChild(bubble); box.appendChild(row); box.scrollTop=box.scrollHeight;
+}
+function initAdvisorChat(){
+  const box=$("advisorMessages"); if(!box)return;
+  if(!advisorHistory.length){
+    const greeting=language==="uk"?"Привіт! Я консультант BRIEFLA. Опишіть свою справу українською або додайте фото чи PDF документа. Я допоможу зрозуміти, що потрібно зробити.":"Cześć! Jestem Doradcą BRIEFLA. Opisz swoją sprawę po polsku albo dodaj zdjęcie/PDF dokumentu. Pomogę Ci zrozumieć, czego dotyczy sprawa i co możesz zrobić dalej.";
+    advisorHistory=[{role:"assistant",content:greeting}]; box.innerHTML=""; advisorAddMessage("assistant",greeting);
+  }
+}
+function setAdvisorAttachment(file){
+  advisorAttachment=file; const box=$("advisorAttachment"); if(!box)return;
+  box.hidden=false; box.innerHTML=`<span>📎 ${escapeHtml(file.name)}</span><button type="button" id="advisorRemoveFile">Usuń</button>`;
+  $("advisorRemoveFile")?.addEventListener("click",()=>{advisorAttachment=null;advisorAttachmentOcr="";box.hidden=true;box.innerHTML="";});
+}
+async function advisorPrepareAttachment(file){
+  if(!file)return {dataUrl:null,ocrText:""};
+  try{
+    if(file.type.startsWith("image/")){
+      const dataUrl=await fileToDataUrl(file);
+      advisorAttachmentOcr=await analyzeAttachment(file);
+      return {dataUrl,ocrText:advisorAttachmentOcr};
+    }
+    advisorAttachmentOcr=await analyzeAttachment(file);
+    return {dataUrl:null,ocrText:advisorAttachmentOcr};
+  }catch(e){ return {dataUrl:null,ocrText:""}; }
+}
+async function sendAdvisorMessage(){
+  const input=$("advisorInput"); if(!input)return;
+  const text=input.value.trim(); if(!text && !advisorAttachment)return;
+  initAdvisorChat();
+  const shown=text || (language==="uk"?"Додаю документ для аналізу.":"Dodaję dokument do analizy.");
+  advisorAddMessage("user",shown); advisorHistory.push({role:"user",content:shown}); input.value="";
+  const send=$("advisorSend"); if(send){send.disabled=true;send.textContent=language==="uk"?"Аналіз…":"Analizuję…";}
+  try{
+    let attachmentDataUrl=null,ocrText="";
+    if(advisorAttachment){ const a=await advisorPrepareAttachment(advisorAttachment); attachmentDataUrl=a.dataUrl;ocrText=a.ocrText; }
+    const transcript=advisorHistory.map(m=>`${m.role==="user"?"Użytkownik":"Doradca"}: ${m.content}`).join("\n\n");
+    const endpoint=advisorEndpoint();
+    if(!endpoint){
+      const fallback=language==="uk"?"Я отримав ваше повідомлення. Щоб надати повний аналіз документа та підготувати відповідь, спочатку потрібно підключити безпечний сервер BRIEFLA AI.":"Otrzymałem Twoją wiadomość. Aby wykonać pełną analizę dokumentu i przygotować odpowiedź, trzeba najpierw podłączyć bezpieczny serwer BRIEFLA AI.";
+      advisorAddMessage("assistant",fallback); advisorHistory.push({role:"assistant",content:fallback}); return;
+    }
+    const res=await fetch(endpoint.replace(/\/$/,"")+"/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"chat",typed:transcript,ocrText,attachmentDataUrl,language})});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const data=await res.json();
+    const reply=data.chatReply || data.summary || (data.draftGerman?`${data.draftGerman}\n\n${data.translation||""}`:"");
+    if(reply){advisorAddMessage("assistant",reply);advisorHistory.push({role:"assistant",content:reply});}
+    if(data.questions?.length){
+      const q=data.questions.map((q,i)=>`${i+1}. ${language==="uk"?q.labelUk:q.labelPl}`).join("\n");
+      advisorAddMessage("assistant",language==="uk"?`Мені ще потрібна така інформація:\n${q}`:`Potrzebuję jeszcze kilku informacji:\n${q}`);
+    }
+    if(data.draftGerman){
+      const btn=document.createElement("button"); btn.className="advisor-result-btn"; btn.textContent=language==="uk"?"Otwórz gotowy лист":"Otwórz gotowe pismo";
+      btn.addEventListener("click",()=>{fillResult(data.subject||"Anfrage",data.draftGerman,data.translation||"",data.recipient||"");});
+      $("advisorMessages")?.appendChild(btn);
+    }
+  }catch(e){
+    const err=language==="uk"?"Не вдалося зараз зв’язатися з консультантом. Перевірте підключення та спробуйте ще раз.":"Nie udało się teraz połączyć z Doradcą. Sprawdź połączenie i spróbuj ponownie.";
+    advisorAddMessage("assistant",err); advisorHistory.push({role:"assistant",content:err});
+  }finally{if(send){send.disabled=false;send.innerHTML=language==="uk"?"Надіслати <span>→</span>":"Wyślij <span>→</span>";}}
+}
+$("advisorAttach")?.addEventListener("click",()=>$("advisorFileInput")?.click());
+$("advisorFileInput")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(f)setAdvisorAttachment(f);});
+$("advisorSend")?.addEventListener("click",sendAdvisorMessage);
+$("advisorInput")?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAdvisorMessage();}});
+
 /* BRIEFLA language layer: Polish / Ukrainian UI. German letter content stays German. */
 const LANG_KEY="brieﬂa:language";
 let language="pl";
 
 const uiText={
   pl:{
-    navStart:"Start",navCategories:"Kategorie",navLetters:"Moje pisma",navTemplates:"Szablony",navProfile:"Profil",backToMenu:"Menu główne",settings:"Ustawienia",help:"Pomoc / FAQ",
+    navStart:"Start",navCategories:"Kategorie",navAdvisor:"Zapytaj Doradcę",navLetters:"Moje pisma",navTemplates:"Szablony",navProfile:"Profil",backToMenu:"Menu główne",settings:"Ustawienia",help:"Pomoc / FAQ",
     heroTitle:"Twoje pisma po niemiecku.<br>Prosto. Szybko. Bez stresu.",benefit1:"E-maile i listy do urzędów",benefit2:"Gotowe szablony",benefit3:"Tłumaczenia i wyjaśnienia",benefit4:"Krok po kroku",startNow:"Zacznij teraz <span>→</span>",
-    feature1Title:"Wybierz kategorię",feature1Text:"Znajdź odpowiedni temat Twojej sprawy.",feature2Title:"Opisz swoją sprawę",feature2Text:"Napisz po polsku, co chcesz przekazać.",feature3Title:"Otrzymaj gotowe pismo",feature3Text:"Pobierz, skopiuj lub wyślij bezpośrednio.",
+    advisorTitle:"Zapytaj Doradcę",advisorText:"Nie wiesz, co oznacza pismo albo co masz zrobić? Dodaj zdjęcie, PDF lub opisz swoją sprawę.",feature1Title:"Wybierz kategorię",feature1Text:"Znajdź odpowiedni temat Twojej sprawy.",feature2Title:"Opisz swoją sprawę",feature2Text:"Napisz po polsku, co chcesz przekazać.",feature3Title:"Otrzymaj gotowe pismo",feature3Text:"Pobierz, skopiuj lub wyślij bezpośrednio.",
     smartStep:"KROK 2A",smartTitle:"Doprecyzuj swoją sprawę",smartIntroTitle:"Potrzebuję jeszcze kilku informacji",smartIntroText:"Dzięki temu pismo będzie konkretne i nie będziemy dopisywać informacji, których nie podałeś.",smartContinue:"Przygotuj pismo <span>→</span>",smartSecurity:"Wpisuj tylko dane potrzebne do tej sprawy. Przed wysłaniem zawsze możesz wszystko sprawdzić i poprawić.",step1:"KROK 1",chooseCategory:"Wybierz kategorię",step2:"KROK 2",describeCase:"Opisz swoją sprawę",step3:"KROK 3",letterReady:"Twoje pismo jest gotowe!",
     describeIntro:"Napisz po polsku, co chcesz przekazać.<br>Możesz wpisać to własnymi słowami.",addFile:"▧ &nbsp; Dodaj plik <small>(np. zdjęcie pisma)</small>",next:"Dalej <span>→</span>",
     editorTitle:"Dostosuj pismo do siebie",editorSub:"Uzupełnij dane i zmień treść przed wysłaniem.",editing:"EDYCJA",senderName:"Imię i nazwisko",recipient:"Odbiorca / urząd",street:"Ulica i numer",city:"PLZ i miejscowość",recipientAddress:"Adres odbiorcy",date:"Data",subjectLabel:"Temat",bodyLabel:"Treść pisma",editorHint:"Możesz zmienić każde pole. Podgląd poniżej aktualizuje się automatycznie.",emailTab:"E-mail",letterTab:"List (DIN 5008)",translationLabel:"🇵🇱 &nbsp; Tłumaczenie na polski",copy:"▣ &nbsp; Kopiuj",translationButton:"PL &nbsp; Tłumaczenie",saveLetter:"⇩ &nbsp; Zapisz pismo",aiNote:"BRIEFLA przygotowuje pismo na podstawie Twojego opisu. Wersja AI analizuje sens wypowiedzi, a nie tylko podmienia słowa.",
@@ -748,9 +832,9 @@ const uiText={
     translationSummary:"🇵🇱 &nbsp; Tłumaczenie na polski",savedEmpty:"<b>Nie masz jeszcze zapisanych pism.</b><br>Przygotuj pismo, kliknij „Zapisz pismo” i znajdziesz je tutaj.",open:"Otwórz",remove:"Usuń",copied:"✓  Skopiowano",saved:"✓  Zapisano",copyError:"Nie udało się skopiować tekstu.",genericTranslation:"Przedstawiam swoje Anliegen po niemiecku w jasnej, formalnej formie. Treść została przygotowana na podstawie Twojego opisu."
   },
   uk:{
-    navStart:"Головна",navCategories:"Категорії",navLetters:"Мої листи",navTemplates:"Шаблони",navProfile:"Профіль",backToMenu:"Головне меню",settings:"Налаштування",help:"Допомога / FAQ",
+    navStart:"Головна",navCategories:"Категорії",navAdvisor:"Запитати консультанта",navLetters:"Мої листи",navTemplates:"Шаблони",navProfile:"Профіль",backToMenu:"Головне меню",settings:"Налаштування",help:"Допомога / FAQ",
     heroTitle:"Ваші листи німецькою.<br>Просто. Швидко. Без стресу.",benefit1:"Електронні листи та листи до установ",benefit2:"Готові шаблони",benefit3:"Переклади та пояснення",benefit4:"Крок за кроком",startNow:"Почати зараз <span>→</span>",
-    feature1Title:"Оберіть категорію",feature1Text:"Знайдіть відповідну тему вашої справи.",feature2Title:"Опишіть свою справу",feature2Text:"Напишіть українською, що ви хочете повідомити.",feature3Title:"Отримайте готовий лист",feature3Text:"Завантажте, скопіюйте або надішліть його.",
+    advisorTitle:"Запитати консультанта",advisorText:"Не знаєте, що означає лист або що робити? Додайте фото, PDF чи опишіть свою справу.",feature1Title:"Оберіть категорію",feature1Text:"Знайдіть відповідну тему вашої справи.",feature2Title:"Опишіть свою справу",feature2Text:"Напишіть українською, що ви хочете повідомити.",feature3Title:"Отримайте готовий лист",feature3Text:"Завантажте, скопіюйте або надішліть його.",
     smartStep:"КРОК 2A",smartTitle:"Уточніть вашу справу",smartIntroTitle:"Потрібно ще кілька відомостей",smartIntroText:"Так лист буде конкретним, і ми не будемо додавати інформацію, якої ви не надавали.",smartContinue:"Підготувати лист <span>→</span>",smartSecurity:"Вводьте лише дані, потрібні для цієї справи. Перед надсиланням ви завжди можете все перевірити та виправити.",step1:"КРОК 1",chooseCategory:"Оберіть категорію",step2:"КРОК 2",describeCase:"Опишіть свою справу",step3:"КРОК 3",letterReady:"Ваш лист готовий!",
     describeIntro:"Напишіть українською, що ви хочете повідомити.<br>Можете описати все своїми словами.",addFile:"▧ &nbsp; Додати файл <small>(наприклад, фото листа)</small>",next:"Далі <span>→</span>",
     editorTitle:"Налаштуйте лист під себе",editorSub:"Заповніть дані та змініть текст перед надсиланням.",editing:"РЕДАГУВАННЯ",senderName:"Ім’я та прізвище",recipient:"Одержувач / установа",street:"Вулиця та номер",city:"Індекс і місто",recipientAddress:"Адреса одержувача",date:"Дата",subjectLabel:"Тема",bodyLabel:"Текст листа",editorHint:"Ви можете змінити будь-яке поле. Попередній перегляд оновлюється автоматично.",emailTab:"E-mail",letterTab:"Лист (DIN 5008)",translationLabel:"🇺🇦 &nbsp; Переклад українською",copy:"▣ &nbsp; Копіювати",translationButton:"UA &nbsp; Переклад",saveLetter:"⇩ &nbsp; Зберегти лист",aiNote:"BRIEFLA готує лист на основі вашого опису. Версія AI аналізує зміст, а не просто замінює слова.",

@@ -15,6 +15,7 @@
       <nav>
         <button class="nav-item active" data-nav="home"><span>⌂</span><span data-i18n="navStart">Start</span></button>
         <button class="nav-item" data-nav="categories"><span>▦</span><span data-i18n="navCategories">Kategorie</span></button>
+        <button class="nav-item advisor-nav" data-advisor="true"><span>✦</span><span data-i18n="navAdvisor">Zapytaj Doradcę</span></button>
         <button class="nav-item" data-nav="letters"><span>▤</span><span data-i18n="navLetters">Moje pisma</span></button>
         <button class="nav-item" data-nav="templates"><span>▤</span><span data-i18n="navTemplates">Szablony</span></button>
         <button class="nav-item" data-nav="profile"><span>♙</span><span data-i18n="navProfile">Profil</span></button>
@@ -45,6 +46,11 @@
 
           <div class="illustration" aria-hidden="true"><img src="hero-reference.png" alt=""></div>
         </div>
+        <button class="advisor-card" data-advisor="true" type="button">
+          <span class="advisor-card-icon">✦</span>
+          <span class="advisor-card-copy"><b data-i18n="advisorTitle">Zapytaj Doradcę</b><small data-i18n="advisorText">Nie wiesz, co oznacza pismo albo co masz zrobić? Dodaj zdjęcie, PDF lub opisz swoją sprawę.</small></span>
+          <span class="advisor-card-arrow">→</span>
+        </button>
 <div class="feature-row">
           <article><span class="feature-icon">▤</span><div><h3 data-i18n="feature1Title">Wybierz kategorię</h3><p data-i18n="feature1Text">Znajdź odpowiedni temat Twojej sprawy.</p></div></article>
           <article><span class="feature-icon">✎</span><div><h3 data-i18n="feature2Title">Opisz swoją sprawę</h3><p data-i18n="feature2Text">Napisz po polsku, co chcesz przekazać.</p></div></article>
@@ -64,6 +70,26 @@
           <button class="cat" data-category="Samochód"><span>▰</span><b data-i18n="cat_car">Samochód</b><small data-i18n="catCarDesc">np. Führerschein, Zulassung</small><i>›</i></button>
           <button class="cat" data-category="Odpowiedź na otrzymane pismo"><span>▤</span><b data-i18n="cat_reply">Odpowiedź na otrzymane pismo</b><small data-i18n="catReplyDesc">np. decyzja, wezwanie</small><i>›</i></button>
           <button class="cat" data-category="Zupełnie inna sprawa"><span>•••</span><b data-i18n="cat_otherCase">Zupełnie inna sprawa</b><small data-i18n="catOtherDesc">Opisz po prostu, o co chodzi</small><i>›</i></button>
+        </div>
+      </section>
+
+      <section id="advisor" class="view">
+        <header><button class="back" data-back>‹</button><div><small>DORADCA BRIEFLA</small><h2 data-i18n="advisorTitle">Zapytaj Doradcę</h2></div><button class="round-help">?</button></header>
+        <button class="home-link" data-home type="button"><span>⌂</span><span data-i18n="backToMenu">Menu główne</span></button>
+        <div class="advisor-chat">
+          <div class="advisor-welcome"><div class="advisor-avatar">B</div><div><b>Zapytaj Doradcę</b><p>Opisz swoją sprawę po polsku lub ukraińsku. Możesz też dodać zdjęcie albo PDF niemieckiego dokumentu.</p></div></div>
+          <div id="advisorMessages" class="advisor-messages" aria-live="polite"></div>
+          <div id="advisorAttachment" class="advisor-attachment" hidden></div>
+          <div class="advisor-composer">
+            <textarea id="advisorInput" maxlength="10000" placeholder="Napisz, z czym masz problem…"></textarea>
+            <div class="advisor-composer-row">
+              <input id="advisorFileInput" type="file" accept="image/*,.pdf,application/pdf" hidden>
+              <button id="advisorAttach" class="advisor-icon-btn" type="button" title="Dodaj zdjęcie lub PDF">📎</button>
+              <span class="advisor-hint">Zdjęcie lub PDF możesz dodać tutaj.</span>
+              <button id="advisorSend" class="cta advisor-send" type="button">Wyślij <span>→</span></button>
+            </div>
+          </div>
+          <div class="advisor-note">Doradca pomaga zrozumieć dokumenty i przygotować pisma. Przed wysłaniem zawsze sprawdź dane i terminy.</div>
         </div>
       </section>
 
@@ -202,6 +228,7 @@
     <nav class="mobile-nav">
       <button data-nav="home" class="active"><span>⌂</span><span data-i18n="navStart">Start</span></button>
       <button data-nav="categories"><span>◈</span><span data-i18n="navCategories">Kategorie</span></button>
+      <button data-advisor="true"><span>✦</span><span data-i18n="navAdvisor">Doradca</span></button>
       <button data-nav="letters"><span>▤</span><span data-i18n="navLetters">Moje pisma</span></button>
       <button data-nav="profile"><span>♙</span><span data-i18n="navProfile">Profil</span></button>
     </nav>
