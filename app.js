@@ -940,11 +940,11 @@ const previousOpenSavedLetter=openSavedLetter;
 openSavedLetter=function(id){previousOpenSavedLetter(id);updateCurrentTranslationLanguage();};
 
 
-/* Mobile bottom navigation uses shorter labels so all five destinations fit cleanly in one row. */
+/* Mobile bottom navigation uses four destinations; the advisor lives in the top bubble. */
 function updateMobileNavLabels(){
   const labels=language==="uk"
-    ? ["Головна","Категорії","Порадник","Листи","Профіль"]
-    : ["Start","Kategorie","Doradca","Pisma","Profil"];
+    ? ["Головна","Категорії","Листи","Профіль"]
+    : ["Start","Kategorie","Pisma","Profil"];
   document.querySelectorAll(".mobile-nav button").forEach((btn,i)=>{
     const label=btn.querySelector("span:last-child");
     if(label && labels[i]) label.textContent=labels[i];
