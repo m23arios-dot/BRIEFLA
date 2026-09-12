@@ -697,3 +697,59 @@
 .mobile-nav > button > span:last-child{width:100%!important;max-width:100%!important;font-size:9px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;text-align:center!important}
 }
 @media (max-width:360px){.mobile-nav > button > span:last-child{font-size:8px!important}}
+
+
+/* V16: compact top advisor control for mobile/PWA. The advisor stays in one row with the language selector. */
+@media (max-width:849px){
+  .top-controls{gap:6px!important;align-items:center!important;}
+  .mobile-top-advisor{
+    flex:0 0 auto!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:150px!important;
+    height:34px!important;
+    padding:0 9px!important;
+    gap:4px!important;
+    border-radius:17px!important;
+    font-size:10px!important;
+    line-height:1!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    box-sizing:border-box!important;
+  }
+  .mobile-top-advisor > span:first-child{
+    display:inline-flex!important;
+    flex:0 0 auto!important;
+    width:13px!important;
+    height:13px!important;
+    align-items:center!important;
+    justify-content:center!important;
+    font-size:11px!important;
+    line-height:1!important;
+  }
+  .mobile-top-advisor > span:last-child{
+    display:block!important;
+    flex:0 1 auto!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:112px!important;
+    font-size:10px!important;
+    line-height:1!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:clip!important;
+  }
+  .top-controls > #languageToggle{
+    flex:0 0 auto!important;
+    min-width:68px!important;
+    height:34px!important;
+    padding:0 9px!important;
+    font-size:12px!important;
+    border-radius:17px!important;
+  }
+}
+@media (max-width:360px){
+  .mobile-top-advisor{max-width:142px!important;font-size:9px!important;padding:0 8px!important;}
+  .mobile-top-advisor > span:first-child{width:12px!important;height:12px!important;font-size:10px!important;}
+  .mobile-top-advisor > span:last-child{max-width:105px!important;font-size:9px!important;}
+}
