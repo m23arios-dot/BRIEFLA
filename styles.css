@@ -467,3 +467,60 @@
 .smart-question input[type="date"]{appearance:none;-webkit-appearance:none;min-height:44px;touch-action:manipulation}
 .smart-question input,.smart-question select,.smart-question textarea{touch-action:manipulation}
 #editDate{appearance:none;-webkit-appearance:none;min-height:44px;touch-action:manipulation}
+.smart-notice{margin:0 0 14px;padding:12px 14px;border:1px solid #dbe7f5;border-radius:12px;background:#f6faff;color:#40546d;font-size:13px;line-height:1.45}
+.smart-question textarea{min-height:96px;resize:vertical}
+
+/* BRIEFLA simple ready-template mode */
+.template-form-intro{display:flex;flex-direction:column;gap:3px;margin:2px 0 12px;padding:12px 14px;background:#f6f9ff;border:1px solid #e5ecf7;border-radius:14px}
+.template-form-intro b{font-size:15px;color:#182a45}
+.template-form-intro small{font-size:12px;color:#718096}
+.template-live-wrap{margin-top:18px}
+.template-live-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:8px}
+.template-live-head b{font-size:15px;color:#182a45}
+.template-live-head small{font-size:11px;color:#7b8798}
+.template-live-paper{background:#fff;border:1px solid #e1e7ef;border-radius:16px;padding:22px;white-space:pre-wrap;font-family:Arial,sans-serif;font-size:13px;line-height:1.65;color:#263449;min-height:300px;box-shadow:0 4px 16px rgba(31,58,90,.05)}
+@media(max-width:849px){.template-live-paper{padding:16px;font-size:12.5px;line-height:1.6}.template-live-head{align-items:flex-start;flex-direction:column;gap:2px}}
+
+/* BRIEFLA document-quality layer — clean A4 preview and print-ready output. */
+.document-shell{max-width:860px;margin:16px 0 14px}
+.document-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px;padding:10px 12px;border:1px solid #dfe7f1;border-radius:12px;background:#f8fbff}
+.document-toolbar b{display:block;font-size:12px;color:#24324a}
+.document-toolbar small{display:block;margin-top:2px;font-size:10px;color:#7b8798}
+.document-toolbar button{border:1px solid #cddced;background:#fff;color:#1768df;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:750;cursor:pointer}
+.document-a4{box-sizing:border-box;width:210mm;min-height:297mm;margin:0 auto;background:#fff;border:1px solid #d9e1eb;border-radius:2px;padding:22mm 20mm 20mm;box-shadow:0 12px 34px rgba(20,40,70,.10);color:#1e2b3d}
+.document-a4 .doc-top{display:flex;justify-content:space-between;align-items:flex-start;min-height:30mm;padding-bottom:12mm}
+.document-a4 .doc-sender{font-size:11pt;font-weight:650;line-height:1.45;white-space:pre-line}
+.document-a4 .doc-date{font-size:10.5pt;color:#4e5b6e;white-space:nowrap}
+.document-a4 .doc-recipient{min-height:24mm;font-size:10.5pt;line-height:1.55;white-space:pre-line}
+.document-a4 .doc-subject{display:block;padding:0 0 8mm;border:0;margin:0;font-size:11pt;line-height:1.5}
+.document-a4 .doc-subject span{font-weight:500;color:#5f6d80}
+.document-a4 .doc-subject b{font-weight:750;color:#17263c}
+.document-a4 article{padding:0;min-height:0;border:0;font-family:"Aptos","Arial",sans-serif;font-size:11pt;line-height:1.65;letter-spacing:.01em;white-space:pre-line}
+.document-a4 article::after{content:"";display:block}
+.document-a4 article{overflow-wrap:anywhere}
+@media(max-width:849px){
+  .document-shell{margin-left:-2px;margin-right:-2px}
+  .document-a4{width:100%;min-height:auto;padding:28px 24px 34px;box-shadow:0 8px 24px rgba(20,40,70,.08)}
+  .document-a4 .doc-top{min-height:0;padding-bottom:28px;gap:16px}
+  .document-a4 .doc-recipient{min-height:0;padding-bottom:28px}
+  .document-a4 .doc-subject{padding-bottom:24px}
+  .document-a4 article{font-size:15px;line-height:1.65}
+}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff !important}
+  body *{visibility:hidden !important}
+  #printArea,#printArea *{visibility:visible !important}
+  #printArea{position:absolute;left:0;top:0;width:210mm !important;min-height:297mm !important;margin:0 !important;border:0 !important;box-shadow:none !important;border-radius:0 !important;padding:22mm 20mm 20mm !important}
+  #printArea .doc-top{min-height:30mm;padding-bottom:12mm}
+  #printArea .doc-recipient{min-height:24mm}
+  #printArea article{font-size:11pt;line-height:1.65}
+  .document-toolbar{display:none !important}
+}
+
+/* Sender / recipient form sections */
+.form-section-title{display:flex;flex-direction:column;gap:3px;margin:4px 0 2px;padding:10px 12px;border:1px solid #e1e8f2;border-radius:12px;background:#f7faff}
+.form-section-title b{font-size:12px;color:#1c2d46}
+.form-section-title small{font-size:10px;color:#748197}
+.recipient-section-title{margin-top:4px}
+.document-a4 .doc-sender{white-space:pre-line}

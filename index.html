@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f7faff">
   <title>BRIEFLA — Twoje sprawy w Niemczech. Prościej.</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
   <div class="app">
@@ -74,7 +74,7 @@
             <input id="senderNameInput" type="text" placeholder="Twoje imię i nazwisko (opcjonalnie)" data-i18n-placeholder="senderOptional">
             <input id="recipientInput" type="text" placeholder="Odbiorca / urząd (opcjonalnie)" data-i18n-placeholder="recipientOptional">
           </div>
-          <div class="textarea"><textarea id="caseText" maxlength="10000" placeholder="Np. Chcę napisać do Jobcenter, że od 1 października zaczynam nową pracę i proszę o wstrzymanie wypłaty Bürgergeld." data-i18n-placeholder="casePlaceholder"></textarea><span id="counter">0/10000</span></div>
+          <div class="textarea"><textarea id="caseText" maxlength="10000" placeholder="Np. Dostałem pismo z Jobcenter i nie wiem, czego ode mnie chcą. Mogę dodać zdjęcie pisma." data-i18n-placeholder="casePlaceholder"></textarea><span id="counter">0/10000</span></div>
           <input id="attachmentInput" type="file" accept="image/*,.pdf,application/pdf" hidden>
           <button class="upload" id="uploadButton" type="button" data-i18n="addFile">▧ &nbsp; Dodaj plik <small>(np. zdjęcie pisma lub PDF)</small></button>
           <div id="attachmentStatus" class="attachment-status" hidden></div>
@@ -87,6 +87,7 @@
         <header><button class="back" data-back>‹</button><div><small data-i18n="smartStep">KROK 2A</small><h2 data-i18n="smartTitle">Doprecyzuj swoją sprawę</h2></div><button class="round-help">?</button></header>
         <div class="smart-card">
           <div class="smart-badge">BRIEFLA</div>
+          <div id="smartNotice" class="smart-notice" hidden></div>
           <h3 data-i18n="smartIntroTitle">Potrzebuję jeszcze kilku informacji</h3>
           <p class="smart-intro" data-i18n="smartIntroText">Dzięki temu pismo będzie konkretne i nie będziemy dopisywać informacji, których nie podałeś.</p>
           <div id="smartQuestionList" class="smart-question-list"></div>
@@ -100,10 +101,12 @@
         <div class="template-editor" id="templateEditor">
           <div class="editor-heading"><div><b data-i18n="editorTitle">Dostosuj pismo do siebie</b><small data-i18n="editorSub">Uzupełnij dane i zmień treść przed wysłaniem.</small></div><span data-i18n="editing">EDYCJA</span></div>
           <div class="editor-grid">
+            <div class="form-section-title editor-full"><b>Twoje dane</b><small>Te dane pojawią się jako nadawca na dokumencie.</small></div>
             <label><span data-i18n="senderName">Imię i nazwisko</span><input id="editSenderName" type="text" placeholder="Anna Kowalska"></label>
-            <label><span data-i18n="recipient">Odbiorca / urząd</span><input id="editRecipient" type="text" placeholder="Jobcenter Goslar"></label>
             <label><span data-i18n="street">Ulica i numer</span><input id="editStreet" type="text" placeholder="Musterstraße 12"></label>
             <label><span data-i18n="city">PLZ i miejscowość</span><input id="editCity" type="text" placeholder="38640 Goslar"></label>
+            <div class="form-section-title editor-full recipient-section-title"><b>Odbiorca</b><small>Urząd lub osoba, do której wysyłasz pismo.</small></div>
+            <label><span data-i18n="recipient">Odbiorca / urząd</span><input id="editRecipient" type="text" placeholder="Jobcenter Goslar"></label>
             <label><span data-i18n="recipientAddress">Adres odbiorcy</span><input id="editRecipientAddress" type="text" placeholder="Musterstraße 1, 38640 Goslar"></label>
             <label><span data-i18n="date">Data</span><input id="editDate" type="date"></label>
             <label class="editor-full"><span data-i18n="subjectLabel">Temat</span><input id="editSubject" type="text" placeholder="Betreff"></label>
@@ -112,9 +115,20 @@
           <div class="editor-hint" data-i18n="editorHint">Możesz zmienić każde pole. Podgląd poniżej aktualizuje się automatycznie.</div>
         </div>
         <div class="tabs"><button class="active" data-i18n="emailTab">E-mail</button><button data-i18n="letterTab">List (DIN 5008)</button></div>
-        <div class="letter">
-          <div class="subject"><small data-i18n="subjectLabel">Temat</small><b id="subject">Anfrage</b><button type="button" id="focusEditor">✎</button></div>
-          <article id="letterText"></article>
+        <div class="document-shell">
+          <div class="document-toolbar">
+            <div><b>Podgląd dokumentu</b><small>A4 · gotowe do druku</small></div>
+            <button type="button" id="printLetter">Drukuj / PDF</button>
+          </div>
+          <div class="letter document-a4" id="printArea">
+            <div class="doc-top">
+              <div class="doc-sender" id="docSender">Vorname Nachname</div>
+              <div class="doc-date" id="docDate"></div>
+            </div>
+            <div class="doc-recipient" id="docRecipientBlock">An die zuständige Stelle</div>
+            <div class="subject doc-subject"><span>Betreff:</span> <b id="subject">Anfrage</b></div>
+            <article id="letterText"></article>
+          </div>
         </div>
         <details class="translation"><summary id="translationSummary">🇵🇱 &nbsp; Tłumaczenie na polski</summary><p id="translation">W kolejnej wersji tutaj pojawi się pełne tłumaczenie pisma.</p></details>
         <div class="result-actions"><button id="copy">▣ &nbsp; Kopiuj</button><button id="copyPolish">PL &nbsp; Tłumaczenie</button><button id="saveText">⇩ &nbsp; Zapisz pismo</button></div>
@@ -142,7 +156,7 @@
           <button data-template="requestDecision"><span>⚖</span><div><b>Prośba o ponowne rozpatrzenie</b><small>Sprawdzenie sprawy / decyzji</small></div><i>›</i></button>
 
           <div class="template-section-label" data-i18n="sectionMoney">Jobcenter i pieniądze</div>
-          <button data-template="jobcenter"><span>€</span><div><b>Jobcenter / Bürgergeld</b><small>Informacja o sytuacji</small></div><i>›</i></button>
+          <button data-template="jobcenter"><span>€</span><div><b>Jobcenter / Grundsicherung</b><small>Zgłoszenia i zmiany</small></div><i>›</i></button>
           <button data-template="newJob"><span>💼</span><div><b>Zgłoszenie nowej pracy</b><small>Nowe zatrudnienie</small></div><i>›</i></button>
           <button data-template="incomeChange"><span>💶</span><div><b>Zmiana dochodu</b><small>Jobcenter / urząd</small></div><i>›</i></button>
           <button data-template="familykasse"><span>👨‍👩‍👧</span><div><b>Familienkasse</b><small>Kindergeld i dokumenty</small></div><i>›</i></button>
@@ -165,7 +179,7 @@
           <div class="template-section-label" data-i18n="sectionOther">Pozostałe</div>
           <button data-template="pension"><span>▤</span><div><b>Deutsche Rentenversicherung</b><small>Emerytura i dokumenty</small></div><i>›</i></button>
           <button data-template="contribution"><span>▤</span><div><b>Beitragsservice</b><small>Rundfunkbeitrag</small></div><i>›</i></button>
-          <button data-template="other"><span>＋</span><div><b>Inne szablony</b><small>Opisz własną sprawę</small></div><i>›</i></button>
+          <button data-template="other"><span>＋</span><div><b>Nie wiem, jaki szablon wybrać</b><small>Dodaj opis lub zdjęcie pisma</small></div><i>›</i></button>
         </div>
       </section>
 
@@ -183,6 +197,6 @@
       <button data-nav="profile"><span>♙</span><span data-i18n="navProfile">Profil</span></button>
     </nav>
   </div>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
